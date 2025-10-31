@@ -1,13 +1,7 @@
-# Node dependencies
-node_modules/
-npm-debug.log
-
-# Environment variables
+# .gitignore
 .env
+# Ignore Node dependencies folder
+node_modules/
 
-# Logs
-*.log
-logs/
-
-# System files
-.DS_Store
+# Ignore the MongoDB tools folder (crucial to keep it out of the repo)
+mongodb-database-tools-windows-x86_64-100.12.2/

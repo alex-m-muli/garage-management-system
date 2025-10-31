@@ -1,0 +1,8 @@
+# .gitignore in project root
+
+# Ignore the large, Windows-specific MongoDB tools folder
+mongodb-database-tools-windows-x86_64-100.12.2/
+
+# Also include common ignores if you haven't already
+node_modules/
+.env
