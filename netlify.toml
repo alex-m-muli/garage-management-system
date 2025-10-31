@@ -1,11 +1,9 @@
-# netlify.toml (Inside the garage-management-system folder)
+# netlify.toml (in the root of your repo)
 
 [build]
-  # CRITICAL: Path is relative from the root of the repository (which is the garage-management-system folder).
-  base = "frontend"
+  # CRITICAL: Path must include the wrapper folder's name!
+  base = "garage-management-system/frontend"
   
-  # Command runs *inside* the "frontend" folder.
+  # Ensure the rest of the settings are correct
   command = "npm run build"
-  
-  # Publish directory is relative to the Base directory (e.g., in /frontend/build)
   publish = "build"
