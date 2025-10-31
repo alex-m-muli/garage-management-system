@@ -1,9 +1,0 @@
-# netlify.toml (in the root of your repo)
-
-[build]
-  # CRITICAL: Path must include the wrapper folder's name!
-  base = "garage-management-system/frontend"
-  
-  # Ensure the rest of the settings are correct
-  command = "npm run build"
-  publish = "build"
