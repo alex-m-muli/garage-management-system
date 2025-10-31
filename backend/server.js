@@ -8,9 +8,9 @@ const cron = require('node-cron');
 
 // Schedule daily backup at 2:00 AM (disabled for Render if not needed)
 // cron.schedule('0 2 * * *', async () => {
-//   console.log('⏰ Auto-backup triggered...');
-//   await createBackup(); // Ensure this returns a promise
-//   cleanupOldBackups();
+//   console.log('⏰ Auto-backup triggered...');
+//   await createBackup(); // Ensure this returns a promise
+//   cleanupOldBackups();
 // });
 
 // Import Routes
@@ -34,17 +34,28 @@ app.use(express.json());
 
 // ✅ Health Check Route (used by Render or for uptime monitoring)
 app.get('/api/health', (req, res) =>
-  res.json({ status: 'ok', time: new Date().toISOString() })
+  res.json({ status: 'ok', time: new Date().toISOString() })
 );
 
 // MongoDB Connection
+
+// 🐛 DEBUG ADDED HERE 
+if (process.env.MONGO_URI) {
+    // Log the first 50 characters of the URI (safe to exclude credentials)
+    const uriPrefix = process.env.MONGO_URI.substring(0, 50);
+    console.log(`🔎 DEBUG: Attempting to connect. URI start: ${uriPrefix}...`);
+} else {
+    console.error('🔎 DEBUG: MONGO_URI environment variable is NOT set!');
+}
+// 🐛 END DEBUG
+
 mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err);
-    process.exit(1); // Exit if connection fails
-  });
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch((err) => {
+    console.error('❌ MongoDB connection failed:', err);
+    process.exit(1); // Exit if connection fails
+  });
 
 // API Routes
 app.use('/api', authRoutes);
@@ -61,18 +72,18 @@ app.use('/api/backup', backupRoutes);
 // Start Server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT}`)
+  console.log(`🚀 Server running on port ${PORT}`)
 );
 
 // Graceful Shutdown
 const shutdown = (signal) => {
-  console.log(`\n🔌 Received ${signal}. Closing server and MongoDB connection...`);
-  server.close(() => {
-    mongoose.connection.close(false, () => {
-      console.log('🛑 MongoDB connection closed.');
-      process.exit(0);
-    });
-  });
+  console.log(`\n🔌 Received ${signal}. Closing server and MongoDB connection...`);
+  server.close(() => {
+    mongoose.connection.close(false, () => {
+      console.log('🛑 MongoDB connection closed.');
+      process.exit(0);
+    });
+  });
 };
 
 process.on('SIGINT', () => shutdown('SIGINT')); // Ctrl+C
