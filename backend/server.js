@@ -28,24 +28,43 @@ const backupRoutes = require('./routes/backupRoutes');
 dotenv.config();
 const app = express();
 
+// --- START UPDATED CORS CONFIGURATION ---
+const FRONTEND_URL = process.env.FRONTEND_URL; 
+// Use the environment variable, or allow all for local development if not set
+const allowedOrigin = FRONTEND_URL || '*'; 
+
+const corsOptions = {
+    origin: allowedOrigin,
+    // Specify the methods your frontend will use
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', 
+    credentials: true, // Needed if your app uses cookies/sessions
+    optionsSuccessStatus: 204
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions)); // Apply the secure CORS options
 app.use(express.json());
+// --- END UPDATED CORS CONFIGURATION ---
+
 
 // ✅ Health Check Route (used by Render or for uptime monitoring)
+app.get('/', (req, res) =>
+  res.send('Welcome to the Garage Management System API!')
+);
 app.get('/api/health', (req, res) =>
   res.json({ status: 'ok', time: new Date().toISOString() })
 );
+
 
 // MongoDB Connection
 
 // 🐛 DEBUG ADDED HERE 
 if (process.env.MONGO_URI) {
-    // Log the first 50 characters of the URI (safe to exclude credentials)
-    const uriPrefix = process.env.MONGO_URI.substring(0, 50);
-    console.log(`🔎 DEBUG: Attempting to connect. URI start: ${uriPrefix}...`);
+    // Log the first 50 characters of the URI (safe to exclude credentials)
+    const uriPrefix = process.env.MONGO_URI.substring(0, 50);
+    console.log(`🔎 DEBUG: Attempting to connect. URI start: ${uriPrefix}...`);
 } else {
-    console.error('🔎 DEBUG: MONGO_URI environment variable is NOT set!');
+    console.error('🔎 DEBUG: MONGO_URI environment variable is NOT set!');
 }
 // 🐛 END DEBUG
 
