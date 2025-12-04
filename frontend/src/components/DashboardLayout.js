@@ -1,74 +1,80 @@
 // frontend/src/components/DashboardLayout.js
 
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React from 'react';
+import styled, { createGlobalStyle } from 'styled-components'; // Added createGlobalStyle
 import Sidebar from './Sidebar';
-import TopBar from './TopBar';   // Import your styled top bar
-import Footer from './Footer';   // Import your styled footer
+import TopBar from './TopBar';   
+import Footer from './Footer';   
 
-// === Layout Container for Sidebar + Content ===
-const LayoutContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
-  background-color: #f7fafc;
-`;
+// === GLOBAL SCROLLBAR STYLES (Main Window) ===
+const GlobalScrollbarStyle = createGlobalStyle`
+  ::-webkit-scrollbar {
+    width: 8px;   /* Slightly wider for the main page */
+    height: 8px;  /* For horizontal scrollbars */
+  }
 
-// === Wrapper for topbar + main content + footer ===
-const ContentArea = styled.div`
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  margin-left: ${({ collapsed, sidebarWidth }) =>
-    collapsed ? '60px' : sidebarWidth};
-  transition: margin-left 0.25s ease-in-out;
+  ::-webkit-scrollbar-track {
+    background: #f1f5f9; 
+  }
 
-  @media (max-width: 768px) {
-    margin-left: 0;
+  ::-webkit-scrollbar-thumb {
+    /* Gradient: Soft Sky Blue -> Periwinkle */
+    background-image: linear-gradient(135deg, #93c5fd 0%, #818cf8 100%);
+    border-radius: 4px;
+    
+    /* This creates a white border around the thumb, making it look like it's floating */
+    border: 2px solid transparent;
+    background-clip: content-box; 
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    /* Slightly deeper gradient on hover */
+    background-image: linear-gradient(135deg, #60a5fa 0%, #6366f1 100%);
   }
 `;
 
-// === Main area excluding topbar and footer ===
+// === Main Content Wrapper ===
 const MainContent = styled.main`
-  flex-grow: 1;
-  padding: 1.5rem;
+  /* 1. Push down so content isn't hidden behind Fixed TopBar */
+  margin-top: 64px; 
+
+  /* 2. Push right so content isn't hidden behind Fixed Sidebar */
+  margin-left: 260px; 
+
+  /* 3. Add padding at bottom so content isn't hidden behind Fixed Footer */
+  padding-bottom: 80px; 
+
+  /* 4. Layout & Theme */
+  min-height: calc(100vh - 64px); 
+  padding: 2rem;
+  box-sizing: border-box;
+  
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); 
+  
+  overflow-x: hidden;
+
+  @media (max-width: 769px) {
+    margin-left: 0;      
+    padding: 1.5rem;     
+    padding-bottom: 100px; 
+  }
 `;
 
 const DashboardLayout = ({ children }) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const sidebarWidth = '240px';
-
-  // Collapse sidebar on small screens automatically
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setCollapsed(true);
-      } else {
-        setCollapsed(false);
-      }
-    };
-
-    handleResize(); // initial
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const toggleSidebar = () => {
-    setCollapsed(prev => !prev);
-  };
-
   return (
-    <LayoutContainer>
-      {/* Sidebar stays fixed */}
-      <Sidebar collapsed={collapsed} toggleSidebar={toggleSidebar} width={sidebarWidth} />
-
-      {/* Right content area adjusts based on sidebar state */}
-      <ContentArea collapsed={collapsed} sidebarWidth={sidebarWidth}>
-        <TopBar />
-        <MainContent>{children}</MainContent>
-        <Footer />
-      </ContentArea>
-    </LayoutContainer>
+    <>
+      {/* Inject the Scrollbar Styles */}
+      <GlobalScrollbarStyle />
+      
+      <TopBar />
+      <Sidebar />
+      
+      <MainContent>
+        {children}
+      </MainContent>
+      
+      <Footer />
+    </>
   );
 };
 

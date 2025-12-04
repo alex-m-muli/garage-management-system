@@ -1,69 +1,144 @@
-// backend/routes/backupRoutes.js
 const express = require('express');
 const router = express.Router();
-const { exec } = require('child_process');
-const path = require('path');
+const mongoose = require('mongoose');
 const fs = require('fs');
+const path = require('path');
+const os = require('os'); // Import OS to find temp dir
+const archiver = require('archiver');
+const AdmZip = require('adm-zip');
+const multer = require('multer');
 
-const BACKUP_DIR = path.join(__dirname, '../backups');
-const DB_NAME = 'garage_db';
-const MONGO_URI = 'mongodb://127.0.0.1:27017';
-const MAX_BACKUPS = 5; // Keep only the 5 most recent backups
+// === Configuration ===
+// Use system temp dir for Render compatibility (guaranteed writable)
+const BACKUP_DIR = path.join(os.tmpdir(), 'garage_backups');
+const MAX_BACKUPS = 5; 
 
 // Ensure backup directory exists
-if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+if (!fs.existsSync(BACKUP_DIR)) {
+  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+}
 
-// === Create Backup with Auto-Cleanup ===
-router.get('/create', (req, res) => {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outDir = path.join(BACKUP_DIR, `backup-${timestamp}`);
-  const command = `mongodump --uri="${MONGO_URI}/${DB_NAME}" --out="${outDir}"`;
+// Configure Multer for temporary upload storage
+const upload = multer({ dest: path.join(os.tmpdir(), 'garage_uploads') });
 
-  exec(command, (err, stdout, stderr) => {
-    if (err) return res.status(500).json({ error: stderr || 'Backup failed' });
-
-    // Cleanup old backups (retain latest N)
-    const folders = fs.readdirSync(BACKUP_DIR)
+// === Helper: Cleanup Old Backups ===
+const cleanupOldBackups = () => {
+  try {
+    const files = fs.readdirSync(BACKUP_DIR)
       .map(name => ({
         name,
+        path: path.join(BACKUP_DIR, name),
         time: fs.statSync(path.join(BACKUP_DIR, name)).mtime.getTime()
       }))
-      .filter(item => fs.statSync(path.join(BACKUP_DIR, item.name)).isDirectory())
+      .filter(f => f.name.endsWith('.zip'))
       .sort((a, b) => b.time - a.time); // Newest first
 
-    const oldFolders = folders.slice(MAX_BACKUPS);
-    oldFolders.forEach(f => {
-      const fullPath = path.join(BACKUP_DIR, f.name);
-      fs.rmSync(fullPath, { recursive: true, force: true });
+    if (files.length > MAX_BACKUPS) {
+      files.slice(MAX_BACKUPS).forEach(f => {
+        fs.unlinkSync(f.path);
+        console.log(`Auto-deleted old backup: ${f.name}`);
+      });
+    }
+  } catch (err) {
+    console.error('Cleanup error:', err);
+  }
+};
+
+// === ROUTE: Create Backup (Native Node Version) ===
+router.get('/create', async (req, res) => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const fileName = `backup-${timestamp}.zip`;
+  const filePath = path.join(BACKUP_DIR, fileName);
+
+  try {
+    // 1. Create a Write Stream to save the zip locally
+    const output = fs.createWriteStream(filePath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    // Listen for completion
+    output.on('close', () => {
+      console.log(`Backup created: ${fileName} (${archive.pointer()} bytes)`);
+      cleanupOldBackups(); // Run cleanup
+      res.download(filePath, fileName); // Send file to user
     });
 
-    return res.json({ message: 'Backup successful', folder: path.basename(outDir) });
-  });
+    archive.on('error', (err) => { throw err; });
+
+    // Pipe archive data to the file
+    archive.pipe(output);
+
+    // 2. Fetch Data from Mongoose and add to Zip
+    const models = mongoose.connection.models;
+    for (const [modelName, Model] of Object.entries(models)) {
+      const data = await Model.find({});
+      archive.append(JSON.stringify(data, null, 2), { name: `${modelName}.json` });
+    }
+
+    await archive.finalize();
+
+  } catch (err) {
+    console.error('Backup failed:', err);
+    if (!res.headersSent) res.status(500).json({ error: 'Backup generation failed', details: err.message });
+  }
 });
 
-// === Restore from Backup ===
-router.post('/restore', (req, res) => {
-  const { folderName } = req.body;
-  if (!folderName) return res.status(400).json({ error: 'Folder name required' });
+// === ROUTE: Restore Backup (Native Node Version) ===
+router.post('/restore', upload.single('backup'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No backup file uploaded' });
 
-  const folderPath = path.join(BACKUP_DIR, folderName);
-  if (!fs.existsSync(folderPath)) return res.status(400).json({ error: 'Backup folder not found' });
+  try {
+    const zip = new AdmZip(req.file.path);
+    const zipEntries = zip.getEntries();
+    const models = mongoose.connection.models;
 
-  const command = `mongorestore --uri="${MONGO_URI}/${DB_NAME}" --drop "${folderPath}"`;
+    console.log('Starting Native Restore...');
 
-  exec(command, (err, stdout, stderr) => {
-    if (err) return res.status(500).json({ error: stderr || 'Restore failed' });
-    return res.json({ message: 'Restore successful' });
-  });
+    for (const entry of zipEntries) {
+      if (entry.entryName.endsWith('.json')) {
+        const modelName = entry.entryName.replace('.json', '');
+        
+        // Find matching Mongoose model (case-insensitive)
+        const Model = Object.values(models).find(
+          m => m.modelName.toLowerCase() === modelName.toLowerCase()
+        );
+
+        if (Model) {
+          const jsonData = JSON.parse(entry.getData().toString('utf8'));
+          if (Array.isArray(jsonData) && jsonData.length > 0) {
+            await Model.deleteMany({}); // Wipe existing data
+            await Model.insertMany(jsonData); // Insert backup data
+            console.log(`Restored ${modelName}: ${jsonData.length} docs`);
+          }
+        }
+      }
+    }
+
+    // Cleanup temp uploaded file
+    fs.unlinkSync(req.file.path);
+    res.json({ message: 'Restore successful. Database updated.' });
+
+  } catch (err) {
+    console.error('Restore failed:', err);
+    res.status(500).json({ error: 'Restore failed', details: err.message });
+  }
 });
 
-// === List available backups ===
+// === ROUTE: List Backups ===
 router.get('/list', (req, res) => {
-  fs.readdir(BACKUP_DIR, (err, files) => {
-    if (err) return res.status(500).json({ error: 'Failed to list backups' });
-    const folders = files.filter(f => fs.statSync(path.join(BACKUP_DIR, f)).isDirectory());
-    return res.json(folders);
-  });
+  try {
+    const files = fs.readdirSync(BACKUP_DIR)
+      .filter(f => f.endsWith('.zip'))
+      .map(name => ({
+        name,
+        created: fs.statSync(path.join(BACKUP_DIR, name)).mtime
+      }))
+      .sort((a, b) => b.created - a.created);
+
+    res.json(files);
+  } catch (err) {
+    // If directory doesn't exist yet, return empty array
+    res.json([]);
+  }
 });
 
 module.exports = router;

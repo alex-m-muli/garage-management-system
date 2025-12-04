@@ -1,90 +1,134 @@
-// frontend/src/components/AddCustomerForm.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // For back navigation
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styled from 'styled-components';
+import { FaUser, FaPhone, FaCar, FaIdCard, FaArrowLeft, FaSave } from 'react-icons/fa';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const Container = styled.div`
-  max-width: 600px;
-  margin: 0 auto;
+// --- CRITICAL: Fallback URL ---
+const API_BASE_URL = process.env.REACT_APP_API_URL
+
+// ===== Styled Components (Theme Consistent) =====
+const Root = styled.div`
+  --bg: #f6f8fb;
+  --text: #0b1220;
+  --accent: #2563eb;
+  --muted: #6b7280;
+  --radius-md: 14px;
+  width: 100%;
+  min-height: 100vh;
   padding: 2rem;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, #f8fafc 0%, var(--bg) 100%);
+  font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 `;
 
-const Title = styled.h2`
-  font-size: 1.5rem;
-  color: #2d3748;
-  margin-bottom: 1.5rem;
+const Card = styled.div`
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,244,255,0.9) 100%);
+  backdrop-filter: blur(14px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(17, 24, 39, 0.04);
+  padding: 2.5rem;
+  box-shadow: 0 20px 40px rgba(10, 18, 30, 0.12);
+  width: 100%;
+  max-width: 600px;
+  margin-top: 2rem;
+`;
+
+const Header = styled.div`
+  margin-bottom: 2rem;
   text-align: center;
 `;
 
-const BackButton = styled.button`
-  background-color: #e53e3e;
-  color: white;
-  padding: 0.5rem 1rem;
-  margin: 0 auto 1.5rem;
-  display: block;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
+const Title = styled.h2`
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+`;
 
-  &:hover {
-    background-color: #c53030;
-  }
+const Subtitle = styled.p`
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0;
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
 const Label = styled.label`
   font-weight: 600;
-  color: #4a5568;
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  svg { color: var(--accent); }
 `;
 
 const Input = styled.input`
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #cbd5e0;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e6eef8;
+  border-radius: 10px;
   font-size: 1rem;
+  background: #fbfdff;
+  transition: all 0.2s;
+
   &:focus {
     outline: none;
-    border-color: #3182ce;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.1);
+    background: #ffffff;
   }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
 `;
 
 const Button = styled.button`
-  background-color: #3182ce;
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  flex: 1;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-weight: 600;
   font-size: 1rem;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 0.1s, opacity 0.2s;
 
-  &:hover {
-    background-color: #2b6cb0;
+  &:hover { opacity: 0.95; transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
+
+  &.primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.25);
   }
-`;
 
-const Message = styled.p`
-  color: green;
-  text-align: center;
-  font-weight: bold;
-`;
-
-const Error = styled.p`
-  color: red;
-  text-align: center;
-  font-weight: bold;
+  &.secondary {
+    background: #f1f5f9;
+    color: #475569;
+  }
 `;
 
 function AddCustomerForm() {
@@ -96,9 +140,7 @@ function AddCustomerForm() {
     vehicleRegNo: '',
   });
 
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate(); // Initialize navigation hook
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -106,70 +148,124 @@ function AddCustomerForm() {
 
   const validateForm = () => {
     const phoneRegex = /^07\d{8}$/;
-    const regNoRegex = /^[A-Z]{3} \d{3}[A-Z]$/;
+    // Relaxed Regex to allow common variations if needed, or keep strict
+    const regNoRegex = /^[A-Z]{3} \d{3}[A-Z]$/; 
 
     if (!formData.name || !formData.mobile || !formData.vehicleMake || !formData.vehicleModel || !formData.vehicleRegNo) {
-      return 'All fields are required.';
+      toast.warn('All fields are required.');
+      return false;
     }
     if (!phoneRegex.test(formData.mobile)) {
-      return 'Mobile number must be in the format 07XXXXXXXX.';
+      toast.warn('Mobile number must be in the format 07XXXXXXXX.');
+      return false;
     }
     if (!regNoRegex.test(formData.vehicleRegNo)) {
-      return 'Registration number must be like "KAA 123A".';
+      toast.warn('Registration number must be like "KAA 123A".');
+      return false;
     }
-    return null;
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
 
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const response = await axios.post('/api/customers', formData);
-      setMessage(response.data.message);
-      setFormData({ name: '', mobile: '', vehicleMake: '', vehicleModel: '', vehicleRegNo: '' });
+      // --- FIXED: Uses API_BASE_URL ---
+      const response = await axios.post(`${API_BASE_URL}/api/customers`, formData);
+      toast.success(response.data.message || 'Customer added successfully!');
+      
+      // Delay navigation slightly so user sees the toast
+      setTimeout(() => {
+        navigate('/customer-dashboard');
+      }, 1500);
+      
     } catch (err) {
-      setError('Failed to add customer.');
       console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to add customer.');
     }
   };
 
   return (
-    <Container>
-      <Title>Add New Customer</Title>
-      {/* Back Button added here */}
-      <BackButton onClick={() => navigate('/customer-dashboard')}>
-        ← Back to Dashboard
-      </BackButton>
+    <Root>
+      <ToastContainer position="top-right" autoClose={3000} theme="light" />
+      
+      <Card>
+        <Header>
+          <Title>Add New Customer</Title>
+          <Subtitle>Register a new client and their vehicle</Subtitle>
+        </Header>
 
-      <Form onSubmit={handleSubmit}>
-        <Label>Name</Label>
-        <Input name="name" value={formData.name} onChange={handleChange} required />
+        <Form onSubmit={handleSubmit}>
+          <FormGroup>
+            <Label><FaUser /> Customer Name</Label>
+            <Input 
+              name="name" 
+              value={formData.name} 
+              onChange={handleChange} 
+              placeholder="e.g. John Doe" 
+              required 
+            />
+          </FormGroup>
 
-        <Label>Mobile Number</Label>
-        <Input name="mobile" value={formData.mobile} onChange={handleChange} required />
+          <FormGroup>
+            <Label><FaPhone /> Mobile Number</Label>
+            <Input 
+              name="mobile" 
+              value={formData.mobile} 
+              onChange={handleChange} 
+              placeholder="07XXXXXXXX" 
+              required 
+            />
+          </FormGroup>
 
-        <Label>Vehicle Make</Label>
-        <Input name="vehicleMake" value={formData.vehicleMake} onChange={handleChange} required />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <FormGroup>
+              <Label><FaCar /> Vehicle Make</Label>
+              <Input 
+                name="vehicleMake" 
+                value={formData.vehicleMake} 
+                onChange={handleChange} 
+                placeholder="e.g. Toyota" 
+                required 
+              />
+            </FormGroup>
 
-        <Label>Vehicle Model</Label>
-        <Input name="vehicleModel" value={formData.vehicleModel} onChange={handleChange} required />
+            <FormGroup>
+              <Label><FaCar /> Vehicle Model</Label>
+              <Input 
+                name="vehicleModel" 
+                value={formData.vehicleModel} 
+                onChange={handleChange} 
+                placeholder="e.g. Corolla" 
+                required 
+              />
+            </FormGroup>
+          </div>
 
-        <Label>Registration Number</Label>
-        <Input name="vehicleRegNo" value={formData.vehicleRegNo} onChange={handleChange} required />
+          <FormGroup>
+            <Label><FaIdCard /> Registration No.</Label>
+            <Input 
+              name="vehicleRegNo" 
+              value={formData.vehicleRegNo} 
+              onChange={handleChange} 
+              placeholder="KAA 123A" 
+              required 
+            />
+          </FormGroup>
 
-        <Button type="submit">Add Customer</Button>
-        {message && <Message>{message}</Message>}
-        {error && <Error>{error}</Error>}
-      </Form>
-    </Container>
+          <ButtonRow>
+            <Button type="button" className="secondary" onClick={() => navigate('/customer-dashboard')}>
+              <FaArrowLeft /> Cancel
+            </Button>
+            <Button type="submit" className="primary">
+              <FaSave /> Save Customer
+            </Button>
+          </ButtonRow>
+        </Form>
+      </Card>
+    </Root>
   );
 }
 

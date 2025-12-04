@@ -17,7 +17,6 @@ import UserManagement from './components/UserManagement';
 import InventoryManagement from './components/InventoryManagement';
 import ReportsDashboard from './components/ReportsDashboard';
 import JobCardForm from './components/JobCardForm';
-import JobCardPrintView from './components/JobCardPrintView';
 import JobCardList from './components/JobCardList';
 import LoginForm from './components/Login';
 import Services from './components/Services';
@@ -54,7 +53,6 @@ function App() {
           <Route path="/reports-management" element={<ProtectedRoute><DashboardLayout><ReportsDashboard /></DashboardLayout></ProtectedRoute>} />
           <Route path="/jobcard-management" element={<ProtectedRoute><DashboardLayout><JobCardForm /></DashboardLayout></ProtectedRoute>} />
           <Route path="/jobcardform/:id" element={<ProtectedRoute><DashboardLayout><JobCardForm /></DashboardLayout></ProtectedRoute>} />
-          <Route path="/jobcards/:id/print" element={<ProtectedRoute><DashboardLayout><JobCardPrintView /></DashboardLayout></ProtectedRoute>} />
           <Route path="/jobcard-list" element={<ProtectedRoute><DashboardLayout><JobCardList /></DashboardLayout></ProtectedRoute>} />
           <Route path="/backup-restore" element={<ProtectedRoute><DashboardLayout><BackupRestore />
           </DashboardLayout></ProtectedRoute>} />
