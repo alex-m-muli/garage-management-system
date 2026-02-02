@@ -146,8 +146,10 @@ function AddCustomerForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const validateForm = () => {
-    const phoneRegex = /^07\d{8}$/;
+const validateForm = () => {
+    // UPDATED: Accepts +254..., 01..., 07...
+    const phoneRegex = /^(\+254|0)(1|7)\d{8}$/;
+    
     // Relaxed Regex to allow common variations if needed, or keep strict
     const regNoRegex = /^[A-Z]{3} \d{3}[A-Z]$/; 
 
@@ -156,7 +158,8 @@ function AddCustomerForm() {
       return false;
     }
     if (!phoneRegex.test(formData.mobile)) {
-      toast.warn('Mobile number must be in the format 07XXXXXXXX.');
+      // UPDATED WARNING
+      toast.warn('Mobile number must be valid (+254, 01, or 07).');
       return false;
     }
     if (!regNoRegex.test(formData.vehicleRegNo)) {
@@ -215,7 +218,7 @@ function AddCustomerForm() {
               name="mobile" 
               value={formData.mobile} 
               onChange={handleChange} 
-              placeholder="07XXXXXXXX" 
+              placeholder="07.., 01.. or +254..." 
               required 
             />
           </FormGroup>

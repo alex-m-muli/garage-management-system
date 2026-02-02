@@ -340,16 +340,19 @@ const UserManagement = () => {
       });
   };
 
-  const isValidContact = phone => /^07\d{8}$/.test(phone);
+// UPDATED: Accepts +254, 01, 07
+const isValidContact = phone => /^(\+254|0)(1|7)\d{8}$/.test(phone);
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    
-    // Frontend validation
-    if (formData.contact && !isValidContact(formData.contact)) {
-      return setError('Phone number must start with 07 and be 10 digits.');
-    }
+const handleFormSubmit = (e) => {
+  e.preventDefault();
+  setError('');
+  
+  // Frontend validation
+  if (formData.contact && !isValidContact(formData.contact)) {
+    // UPDATED ERROR MESSAGE
+    return setError('Phone number must start with 01, 07, or +254.');
+  }
+  // ...
 
     setLoading(true);
     const payload = {
@@ -527,7 +530,7 @@ const UserManagement = () => {
                     name="contact"
                     value={formData.contact}
                     onChange={e => setFormData({ ...formData, contact: e.target.value })}
-                    placeholder="0712345678"
+                    placeholder="07.., 01.. or +254..." 
                   />
                 </FormGroup>
 

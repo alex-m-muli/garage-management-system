@@ -295,11 +295,12 @@ const JobCardForm = () => {
       }
     }
 
-    if (form.mobile && !/^((\+254|0)7\d{8})$/.test(form.mobile)) {
-      newErrors.mobile = true;
-      toast.warn('Invalid mobile number format.');
-      isValid = false;
-    }
+// UPDATED: Added '1' to the group (7|1) to allow 01... and +2541...
+if (form.mobile && !/^(\+254|0)(7|1)\d{8}$/.test(form.mobile)) {
+  newErrors.mobile = true;
+  toast.warn('Invalid mobile number format. Use 07.., 01.., or +254..');
+  isValid = false;
+}
 
     setFieldErrors(newErrors);
     
@@ -419,7 +420,7 @@ const JobCardForm = () => {
                 name="mobile" 
                 value={form.mobile || ''} 
                 onChange={handleChange} 
-                placeholder="07XXXXXXXX" 
+                placeholder="07.., 01.. or +254..." 
                 $error={fieldErrors.mobile}
               />
             </FormGroup>
