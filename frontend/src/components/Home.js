@@ -6,83 +6,64 @@ import {
   FiHome, FiUsers, FiSettings, FiFileText,
   FiList, FiGrid, FiLogOut, FiMenu, FiX
 } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './context/AuthContext';
 
-/*
-  Home.js - Regenerated
-  - Adds a smooth looping typing + deleting effect on the last word "Garage"
-  - Uses only React + styled-components (no extra heavy libs)
-  - Keeps original nav, mobile drawer, backgrounds, and logo
-  - Small visual refinements: subtle animated overlay, blinking caret
-  - Plenty of inline comments to explain changes and knobs to tune
-*/
-
-/* =========================
-   Animation helpers
-   ========================= */
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
+/* ================= Animations ================= */
 
 const slideUp = keyframes`
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
 
-/* subtle animated radial overlay to make content pop on all backgrounds */
-const pulseOverlay = keyframes`
-  0% { transform: scale(1); opacity: 0.04; }
-  50% { transform: scale(1.03); opacity: 0.08; }
-  100% { transform: scale(1); opacity: 0.04; }
+const bgZoom = keyframes`
+  from { transform: scale(1.02); }
+  to   { transform: scale(1.06); }
 `;
 
-/* =========================
-   Styled components
-   ========================= */
+/* ================= Layout ================= */
 
-/* change from fixed to relative + min-height:100vh so page can still scroll if needed
-   This is a small usability fix while keeping the original full-screen hero feel. */
+/* IMPORTANT: keep fixed – as you requested */
 const HeroWrapper = styled.div`
-  position: relative;
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   width: 100%;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f172a; /* Fallback color */
+  background: #0f172a;
 `;
 
-/* Background images (kept exactly as before, but we add a subtle transform and transition) */
 const AnimatedBackground = styled.div`
   position: absolute;
   inset: 0;
-  background-image: url(${props => props.image});
+  background-image: url(${p => p.image});
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: ${props => (props.$active ? 1 : 0)};
-  transition: opacity 1.5s ease-in-out, transform 8s linear;
-  z-index: -3;
-  transform: ${props => (props.$active ? 'scale(1.03)' : 'scale(1.02)')};
+  opacity: ${p => (p.$active ? 1 : 0)};
+  transition: opacity 1.6s ease-in-out;
+  z-index: -2;
+
+  /* small cinematic movement */
+  animation: ${bgZoom} 18s linear infinite alternate;
 `;
 
-/* darker gradient overlay with a soft animated pulse -- keeps backgrounds but improves contrast */
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
     rgba(0,0,0,0.28) 0%,
-    rgba(0,0,0,0.22) 45%,
+    rgba(0,0,0,0.18) 45%,
     rgba(0,0,0,0.72) 100%
   );
-  z-index: -2;
-  animation: ${pulseOverlay} 12s ease-in-out infinite;
+  z-index: -1;
 `;
 
-/* Header / Navigation (mostly preserved) */
+/* ================= Header ================= */
+
 const Header = styled.nav`
   display: flex;
   align-items: center;
@@ -102,7 +83,6 @@ const LogoSection = styled.div`
 
   img {
     height: 38px;
-    width: auto;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
   }
 
@@ -140,7 +120,7 @@ const NavItem = styled(NavLink)`
   backdrop-filter: blur(4px);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.2);
     color: white;
     transform: translateY(-2px);
   }
@@ -181,8 +161,7 @@ const MobileToggle = styled.button`
   cursor: pointer;
   display: none;
   z-index: 101;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  
+
   @media (max-width: 1100px) {
     display: block;
   }
@@ -197,7 +176,7 @@ const MobileDrawer = styled.div`
   background: rgba(15, 23, 42, 0.98);
   padding: 5rem 1.5rem 2rem;
   z-index: 100;
-  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transform: translateX(${p => p.$isOpen ? '0' : '100%'});
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -205,20 +184,19 @@ const MobileDrawer = styled.div`
   box-shadow: -10px 0 30px rgba(0,0,0,0.5);
 `;
 
-/* Main content center area */
+/* ================= Main content ================= */
+
 const MainContent = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
   z-index: 10;
   text-align: center;
-  padding: 6rem 1rem 4rem;
+  padding: 0 1rem;
 `;
 
-/* Title styles (we split static & dynamic parts for the typing effect) */
 const HeroTitle = styled.h1`
   font-size: 4rem;
   font-weight: 900;
@@ -227,51 +205,30 @@ const HeroTitle = styled.h1`
   text-shadow: 0 4px 25px rgba(0,0,0,0.6);
   letter-spacing: -1px;
   animation: ${slideUp} 0.8s ease forwards;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
   }
 `;
 
-/* Static part (everything except the last word) */
-const StaticPart = styled.span`
-  color: white;
-  font-weight: 900;
-`;
-
-/* Typing word container:
-   - min-width uses ch so the layout doesn't jump as letters are typed/deleted
-   - we use a monospace fallback for the dynamic area to make caret/typing feel consistent */
-const TypingWord = styled.span`
+const TypedWord = styled.span`
   display: inline-block;
-  min-width: 7ch; /* "Garage" is 6 letters, so 7ch gives a small buffer */
-  font-family: 'Inter', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  position: relative;
-  white-space: nowrap;
-  color: #f8fafc;
-  -webkit-font-smoothing: antialiased;
-  /* caret is handled by ::after */
+  min-width: 9ch; /* avoids layout jump */
 `;
 
-/* blinking caret implemented via pseudo-element for cleaner markup */
 const Caret = styled.span`
   display: inline-block;
   width: 2px;
-  height: 1.05em;
-  margin-left: 6px;
-  background: rgba(255,255,255,0.85);
-  border-radius: 1px;
+  height: 1em;
+  margin-left: 4px;
+  background: #3b82f6;
   animation: blink 1s steps(1) infinite;
-  @keyframes blink { 50% { opacity: 0 } }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
 `;
 
-/* Subtitle and action button (kept similar) */
 const HeroSubtitle = styled.p`
   font-size: 1.35rem;
   color: rgba(255, 255, 255, 0.95);
@@ -292,16 +249,14 @@ const ActionButton = styled.button`
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255,255,255,0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: ${slideUp} 1.2s ease forwards;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 
   &:hover {
     transform: translateY(-4px) scale(1.02);
     box-shadow: 0 20px 40px rgba(37, 99, 235, 0.5);
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   }
 `;
 
@@ -319,85 +274,73 @@ const Footer = styled.footer`
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 `;
 
-/* =========================
-   Typing effect configuration
-   ========================= */
+/* ================= Typing setup ================= */
 
-/*
-  NOTES:
-  - We target only the word "Garage" for typing/deleting.
-  - Tweak the constants below to change speeds and pauses.
-*/
-const TYPING_WORD = 'Garage';
-const TYPING_SPEED = 90;      // ms per character when typing
-const DELETING_SPEED = 55;    // ms per character when deleting
-const DELAY_AFTER_TYPE = 900; // ms to wait after full word typed
-const DELAY_AFTER_DELETE = 300; // ms to wait after fully deleted
+const WORDS = ['Garage', 'Workshop'];
 
-/* =========================
-   Component
-   ========================= */
+const TYPE_SPEED = 130;
+const DELETE_SPEED = 90;
+const HOLD_AFTER_TYPE = 2200;
+const HOLD_AFTER_DELETE = 600;
+
+/* ================= Component ================= */
+
 const Home = () => {
+
   const { logout } = useAuth();
   const navigate = useNavigate();
+
   const backgrounds = ['/background.jpg', '/background2.jpg', '/background3.jpg'];
+
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Typing effect state:
-  const [typed, setTyped] = useState('');      // current visible substring of TYPING_WORD
+  /* typing states */
+  const [wordIndex, setWordIndex] = useState(0);
+  const [text, setText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /* Background rotation (kept same timing as original, slight improvement for smoothness)
-     cycles every 7s */
+  /* background rotation – unchanged */
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
     }, 7000);
+
     return () => clearInterval(interval);
   }, [backgrounds.length]);
 
-  /* Typing effect loop
-     - types the word letter by letter
-     - when fully typed, pauses, then deletes letter by letter
-     - when fully deleted, pauses then restarts typing
-  */
+  /* typing effect */
   useEffect(() => {
-    let timeoutId;
 
-    const handleTyping = () => {
-      const full = TYPING_WORD;
-      if (!isDeleting) {
-        // typing forward
-        const next = full.substring(0, typed.length + 1);
-        setTyped(next);
+    const currentWord = WORDS[wordIndex];
 
-        if (next === full) {
-          // finished typing: pause then start deleting
-          timeoutId = setTimeout(() => setIsDeleting(true), DELAY_AFTER_TYPE);
-        } else {
-          timeoutId = setTimeout(handleTyping, TYPING_SPEED);
-        }
-      } else {
-        // deleting
-        const next = full.substring(0, Math.max(0, typed.length - 1));
-        setTyped(next);
+    let timer;
 
-        if (next === '') {
-          // finished deleting: pause then start typing
-          timeoutId = setTimeout(() => setIsDeleting(false), DELAY_AFTER_DELETE);
-        } else {
-          timeoutId = setTimeout(handleTyping, DELETING_SPEED);
-        }
-      }
-    };
+    if (!isDeleting && text === currentWord) {
+      timer = setTimeout(() => setIsDeleting(true), HOLD_AFTER_TYPE);
+      return () => clearTimeout(timer);
+    }
 
-    // Start the cycle (or continue it)
-    timeoutId = setTimeout(handleTyping, isDeleting ? DELETING_SPEED : TYPING_SPEED);
+    if (isDeleting && text === '') {
+      timer = setTimeout(() => {
+        setIsDeleting(false);
+        setWordIndex(i => (i + 1) % WORDS.length);
+      }, HOLD_AFTER_DELETE);
 
-    return () => clearTimeout(timeoutId);
-    // typed & isDeleting are dependencies so we react to their changes
-  }, [typed, isDeleting]);
+      return () => clearTimeout(timer);
+    }
+
+    timer = setTimeout(() => {
+      const next = isDeleting
+        ? currentWord.substring(0, text.length - 1)
+        : currentWord.substring(0, text.length + 1);
+
+      setText(next);
+    }, isDeleting ? DELETE_SPEED : TYPE_SPEED);
+
+    return () => clearTimeout(timer);
+
+  }, [text, isDeleting, wordIndex]);
 
   const handleLogout = () => {
     logout();
@@ -415,13 +358,18 @@ const Home = () => {
 
   return (
     <HeroWrapper>
-      {/* Backgrounds - preserved images */}
+
+      {/* Backgrounds – unchanged paths */}
       {backgrounds.map((bg, i) => (
-        <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
+        <AnimatedBackground
+          key={i}
+          image={bg}
+          $active={i === bgIndex}
+        />
       ))}
+
       <Overlay />
 
-      {/* Header */}
       <Header>
         <LogoSection>
           <img src="/logo.png" alt="Logo" />
@@ -439,58 +387,58 @@ const Home = () => {
           </LogoutBtn>
         </DesktopNav>
 
-        <MobileToggle onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
+        <MobileToggle onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <FiX /> : <FiMenu />}
         </MobileToggle>
       </Header>
 
-      {/* Mobile Drawer */}
-      <MobileDrawer $isOpen={mobileMenuOpen} aria-hidden={!mobileMenuOpen}>
+      <MobileDrawer $isOpen={mobileMenuOpen}>
         {navItems.map((item, idx) => (
           <NavItem
             key={idx}
             to={item.to}
             onClick={() => setMobileMenuOpen(false)}
-            style={{width: '100%', justifyContent:'flex-start'}}
+            style={{ width: '100%', justifyContent: 'flex-start' }}
           >
             {item.icon} {item.label}
           </NavItem>
         ))}
-        <div style={{height: '1px', background: 'rgba(255,255,255,0.1)', margin: '10px 0'}} />
-        <LogoutBtn onClick={handleLogout} style={{width: '100%', margin: 0, justifyContent: 'center'}}>
-           <FiLogOut /> Logout
+
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '10px 0' }} />
+
+        <LogoutBtn
+          onClick={handleLogout}
+          style={{ width: '100%', margin: 0, justifyContent: 'center' }}
+        >
+          <FiLogOut /> Logout
         </LogoutBtn>
       </MobileDrawer>
 
-      {/* Main hero content */}
       <MainContent>
-        {/* Title: static part + dynamic typing part */}
+
         <HeroTitle>
-          <StaticPart>Welcome To Narayan Auto</StaticPart>
-          <TypingWord
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            title={`Narayan Auto ${TYPING_WORD}`}
-          >
-            {typed}
-            <Caret aria-hidden="true" />
-          </TypingWord>
+          Welcome To Narayan Auto{' '}
+          <TypedWord>
+            {text}
+            <Caret />
+          </TypedWord>
         </HeroTitle>
 
         <HeroSubtitle>
-          Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
+          Your Trusted Partner for Vehicle Maintenance & Repair.<br />
           Professional Service. Guaranteed Quality.
         </HeroSubtitle>
 
         <ActionButton onClick={() => navigate('/services')}>
           Access Dashboard
         </ActionButton>
+
       </MainContent>
 
       <Footer>
         © 2026 Narayan Limited. All rights reserved.
       </Footer>
+
     </HeroWrapper>
   );
 };
