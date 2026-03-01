@@ -1,17 +1,16 @@
-// Home.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import {
   FiHome, FiUsers, FiSettings, FiFileText,
   FiList, FiGrid, FiLogOut, FiMenu, FiX
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
-// === Animations ===
+// === Keyframe Animations ===
 const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
 const slideUp = keyframes`
@@ -19,9 +18,13 @@ const slideUp = keyframes`
   to { transform: translateY(0); opacity: 1; }
 `;
 
+const blinkCursor = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`;
+
 // === Styled Components ===
 
-/* FIX: position: fixed + inset: 0 prevents ANY scrolling */
 const HeroWrapper = styled.div`
   position: fixed;
   inset: 0;
@@ -31,7 +34,7 @@ const HeroWrapper = styled.div`
   display: flex;
   flex-direction: column;
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f172a; /* Fallback color */
+  background: #0f172a; 
 `;
 
 const AnimatedBackground = styled.div`
@@ -40,116 +43,98 @@ const AnimatedBackground = styled.div`
   background-image: url(${props => props.image});
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
-  opacity: ${props => (props.$active ? 1 : 0)};
-  transition: opacity 1.5s ease-in-out;
+  transition: background-image 1.5s ease-in-out;
   z-index: -2;
-  /* Subtle zoom effect for premium feel */
-  transform: scale(1.02);
+  /* Niche refinement: subtle breathing effect */
+  animation: breathing 20s ease-in-out infinite;
+
+  @keyframes breathing {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Darker gradient at bottom for text contrast */
+    background: linear-gradient(
+      to bottom, 
+      rgba(15, 23, 42, 0.3) 0%, 
+      rgba(15, 23, 42, 0.85) 100%
+    );
+    z-index: -1;
+  }
 `;
 
-const Overlay = styled.div`
-  position: absolute;
-  inset: 0;
-  /* Darker gradient at bottom to make footer/button legible */
-  background: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.3) 0%,
-    rgba(0,0,0,0.2) 50%,
-    rgba(0,0,0,0.7) 100%
-  );
-  z-index: -1;
-`;
-
-/* === Header / Navigation === */
-const Header = styled.nav`
+const Header = styled.header`
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  height: 70px;
-  width: 100%;
-  box-sizing: border-box; /* Ensures padding doesn't add width */
-  z-index: 50;
-  /* Very subtle gradient for top bar visibility */
-  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+  align-items: center;
+  padding: 1.2rem 5%;
+  background: transparent;
+  z-index: 100;
 `;
 
-const LogoSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  img {
-    height: 38px;
-    width: auto;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  }
-  
-  h2 {
-    color: white;
-    font-size: 1.25rem;
-    margin: 0;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+const Logo = styled.div`
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  text-transform: uppercase;
+
+  span {
+    color: #3b82f6; /* Narayan Blue */
   }
 `;
 
-const DesktopNav = styled.div`
+const DesktopNav = styled.nav`
   display: flex;
-  gap: 10px;
+  gap: 1rem;
   align-items: center;
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1024px) {
     display: none;
   }
 `;
 
 const NavItem = styled(NavLink)`
-  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 50px; /* Pill shape */
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 500;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s;
-  background: rgba(0, 0, 0, 0.2); /* Slight tint for readability */
-  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+  padding: 8px 14px;
+  border-radius: 8px;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    transform: translateY(-2px);
-  }
-
-  &.active {
-    background: #2563eb;
-    color: white;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  &:hover, &.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
   }
 `;
 
 const LogoutBtn = styled.button`
-  background: #dc2626;
-  border: none;
+  background: #ef4444;
   color: white;
-  padding: 0.5rem 1.2rem;
-  border-radius: 50px;
-  cursor: pointer;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 8px;
   font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  transition: all 0.3s ease;
   margin-left: 10px;
-  transition: transform 0.2s;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 
   &:hover {
-    background: #ef4444;
-    transform: scale(1.05);
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   }
 `;
 
@@ -158,12 +143,10 @@ const MobileToggle = styled.button`
   border: none;
   color: white;
   font-size: 1.8rem;
-  cursor: pointer;
   display: none;
-  z-index: 101;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  
-  @media (max-width: 1100px) {
+  cursor: pointer;
+
+  @media (max-width: 1024px) {
     display: block;
   }
 `;
@@ -172,142 +155,166 @@ const MobileDrawer = styled.div`
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
-  width: 280px;
-  background: rgba(15, 23, 42, 0.98);
-  padding: 5rem 1.5rem 2rem;
-  z-index: 100;
-  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 300px;
+  height: 100%;
+  background: #1e293b;
+  padding: 80px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  gap: 0.8rem;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(${props => (props.$isOpen ? '0' : '100%')});
+  z-index: 90;
 `;
 
-/* === Main Content === */
-const MainContent = styled.div`
+const MainContent = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 10;
+  align-items: center;
   text-align: center;
-  padding: 0 1rem;
+  padding: 0 24px;
+  color: white;
+  animation: ${slideUp} 0.8s ease-out forwards;
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 4rem;
+  font-size: clamp(2.2rem, 8vw, 4.2rem);
   font-weight: 900;
-  margin: 0 0 1rem;
-  color: white;
-  /* Heavy text shadow replaces the glass card background */
-  text-shadow: 0 4px 25px rgba(0,0,0,0.6); 
-  letter-spacing: -1px;
-  animation: ${slideUp} 0.8s ease forwards;
+  margin-bottom: 0.8rem;
+  letter-spacing: -1.5px;
+  line-height: 1.1;
+  min-height: 1.2em; /* Reserves space to prevent jumping */
+`;
 
-  @media (max-width: 768px) {
-    font-size: 2.5rem;
-  }
+const Cursor = styled.span`
+  color: #3b82f6;
+  font-weight: 200;
+  animation: ${blinkCursor} 0.8s infinite;
+  margin-left: 4px;
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: 1.35rem;
-  color: rgba(255, 255, 255, 0.95);
-  margin-bottom: 3rem;
-  max-width: 700px;
-  line-height: 1.5;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-  font-weight: 500;
-  animation: ${slideUp} 1s ease forwards;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 750px;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  
+  /* Initial hidden state */
+  opacity: 0;
+  transform: translateY(10px);
+  
+  /* Step 2 Trigger */
+  ${props => props.$isVisible && css`
+    animation: ${fadeIn} 1.2s ease-out forwards;
+  `}
 `;
 
 const ActionButton = styled.button`
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: #3b82f6;
   color: white;
   border: none;
-  padding: 1.2rem 3rem;
-  border-radius: 50px;
-  font-size: 1.1rem;
+  padding: 16px 40px;
+  font-size: 1.05rem;
   font-weight: 700;
+  border-radius: 50px;
   cursor: pointer;
-  /* Strong shadow to lift button off background */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: ${slideUp} 1.2s ease forwards;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
 
   &:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.5);
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: #2563eb;
+    transform: scale(1.05);
+    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
   }
+
+  /* Sync with subtitle fade */
+  opacity: 0;
+  ${props => props.$isVisible && css`
+    animation: ${fadeIn} 1.2s ease-out 0.4s forwards;
+  `}
 `;
 
-const Footer = styled.footer`
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
-  z-index: 20;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-`;
+// === Main Component ===
 
-// === Component ===
 const Home = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const backgrounds = ['/background.jpg', '/background2.jpg', '/background3.jpg'];
+  
+  // Niche refinement: High-quality professional garage imagery
+  const backgrounds = [
+    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1920',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1920',
+    'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?auto=format&fit=crop&q=80&w=1920'
+  ];
+
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBgIndex(prev => (prev + 1) % backgrounds.length);
-    }, 7000);
-    return () => clearInterval(interval);
-  }, [backgrounds.length]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  
+  // Typing state
+  const [displayText, setDisplayText] = useState('');
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const fullText = "Welcome To Narayan Auto Garage";
 
   const navItems = [
-    { to: "/homepage", icon: <FiHome />, label: "Home" },
-    { to: "/services", icon: <FiSettings />, label: "Services" },
-    { to: "/jobcard-list", icon: <FiList />, label: "Job Cards" },
-    { to: "/customer-dashboard", icon: <FiUsers />, label: "Customers" },
-    { to: "/user-management", icon: <FiGrid />, label: "Staff" },
-    { to: "/reports-management", icon: <FiFileText />, label: "Reports" },
+    { to: "/", label: "Home", icon: <FiHome /> },
+    { to: "/job-card", label: "Job Cards", icon: <FiFileText /> },
+    { to: "/customers", label: "Customers", icon: <FiUsers /> },
+    { to: "/services", label: "Services", icon: <FiList /> },
+    { to: "/inventory", label: "Inventory", icon: <FiGrid /> },
+    { to: "/users", label: "Staff", icon: <FiSettings /> },
   ];
+
+  // Logic: Background rotation
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBgIndex(prev => (prev + 1) % backgrounds.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [backgrounds.length]);
+
+  // Logic: Lightweight Typing Effect
+  useEffect(() => {
+    let index = 0;
+    const speed = 65; // ms per char
+    
+    // Delay start until entrance animation is halfway
+    const startTimeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        setDisplayText(fullText.slice(0, index));
+        index++;
+        
+        if (index > fullText.length) {
+          clearInterval(interval);
+          setIsTypingComplete(true); // Trigger Step 2: Subtitle Fade
+        }
+      }, speed);
+
+      return () => clearInterval(interval);
+    }, 500);
+
+    return () => clearTimeout(startTimeout);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
 
   return (
     <HeroWrapper>
-      {/* Background Layer */}
-      {backgrounds.map((bg, i) => (
-        <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
-      ))}
-      <Overlay />
-
-      {/* Header */}
+      <AnimatedBackground image={backgrounds[bgIndex]} />
+      
       <Header>
-        <LogoSection>
-          <img src="/logo.png" alt="Logo" />
-          <h2>Narayan Garage</h2>
-        </LogoSection>
+        <Logo onClick={() => navigate('/')}>
+          Narayan <span>Garage</span>
+        </Logo>
 
         <DesktopNav>
           {navItems.map((item, idx) => (
-            <NavItem key={idx} to={item.to}>
+            <NavItem key={idx} to={item.to} end={item.to === "/"}>
               {item.icon} {item.label}
             </NavItem>
           ))}
@@ -321,34 +328,34 @@ const Home = () => {
         </MobileToggle>
       </Header>
 
-      {/* Mobile Drawer */}
       <MobileDrawer $isOpen={mobileMenuOpen}>
         {navItems.map((item, idx) => (
-          <NavItem key={idx} to={item.to} onClick={() => setMobileMenuOpen(false)} style={{width: '100%', justifyContent:'flex-start'}}>
+          <NavItem key={idx} to={item.to} onClick={() => setMobileMenuOpen(false)}>
             {item.icon} {item.label}
           </NavItem>
         ))}
-        <div style={{height: '1px', background: 'rgba(255,255,255,0.1)', margin: '10px 0'}}></div>
+        <div style={{height: '1px', background: 'rgba(255,255,255,0.1)', margin: '15px 0'}} />
         <LogoutBtn onClick={handleLogout} style={{width: '100%', margin: 0, justifyContent: 'center'}}>
            <FiLogOut /> Logout
         </LogoutBtn>
       </MobileDrawer>
 
-      {/* Content - No Box, Just Text */}
       <MainContent>
-          <HeroTitle>Welcome To Narayan Garage</HeroTitle>
-          <HeroSubtitle>
+          <HeroTitle>
+            {displayText}
+            {!isTypingComplete && <Cursor>|</Cursor>}
+          </HeroTitle>
+          
+          <HeroSubtitle $isVisible={isTypingComplete}>
             Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
             Professional Service. Guaranteed Quality.
           </HeroSubtitle>
-          <ActionButton onClick={() => navigate('/services')}>
-            Access Dashboard
+          
+          <ActionButton $isVisible={isTypingComplete} onClick={() => navigate('/job-card')}>
+            Get Started
           </ActionButton>
       </MainContent>
 
-      <Footer>
-        © 2025 Narayan Limited. All rights reserved.
-      </Footer>
     </HeroWrapper>
   );
 };
