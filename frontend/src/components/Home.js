@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import {
@@ -8,12 +8,13 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 // === Keyframe Animations ===
+
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const slideUp = keyframes`
+const slideUpEntrance = keyframes`
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
@@ -21,6 +22,11 @@ const slideUp = keyframes`
 const blinkCursor = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+`;
+
+const breathingZoom = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 `;
 
 // === Styled Components ===
@@ -33,7 +39,7 @@ const HeroWrapper = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
   background: #0f172a; 
 `;
 
@@ -45,22 +51,18 @@ const AnimatedBackground = styled.div`
   background-position: center;
   transition: background-image 1.5s ease-in-out;
   z-index: -2;
-  /* Niche refinement: subtle breathing effect */
-  animation: breathing 20s ease-in-out infinite;
-
-  @keyframes breathing {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
-  }
+  
+  /* Niche Refinement: Subtle breathing zoom for a dynamic feel */
+  animation: ${breathingZoom} 20s ease-in-out infinite;
 
   &::after {
     content: '';
     position: absolute;
     inset: 0;
-    /* Darker gradient at bottom for text contrast */
+    /* Deep gradient for text legibility and cinematic look */
     background: linear-gradient(
       to bottom, 
-      rgba(15, 23, 42, 0.3) 0%, 
+      rgba(15, 23, 42, 0.4) 0%, 
       rgba(15, 23, 42, 0.85) 100%
     );
     z-index: -1;
@@ -74,6 +76,7 @@ const Header = styled.header`
   padding: 1.2rem 5%;
   background: transparent;
   z-index: 100;
+  animation: ${fadeIn} 1s ease-out;
 `;
 
 const Logo = styled.div`
@@ -85,13 +88,13 @@ const Logo = styled.div`
   text-transform: uppercase;
 
   span {
-    color: #3b82f6; /* Narayan Blue */
+    color: #3b82f6; /* Narayan Blue accent */
   }
 `;
 
 const DesktopNav = styled.nav`
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   align-items: center;
 
   @media (max-width: 1024px) {
@@ -101,14 +104,14 @@ const DesktopNav = styled.nav`
 
 const NavItem = styled(NavLink)`
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.3s ease;
-  padding: 8px 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 8px 16px;
   border-radius: 8px;
 
   &:hover, &.active {
@@ -118,12 +121,13 @@ const NavItem = styled(NavLink)`
 `;
 
 const LogoutBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 9px 18px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -132,9 +136,10 @@ const LogoutBtn = styled.button`
   margin-left: 10px;
 
   &:hover {
-    background: #dc2626;
+    background: #ef4444;
+    color: white;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
   }
 `;
 
@@ -155,16 +160,17 @@ const MobileDrawer = styled.div`
   position: fixed;
   top: 0;
   right: 0;
-  width: 300px;
+  width: 280px;
   height: 100%;
-  background: #1e293b;
+  background: #0f172a;
   padding: 80px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.5rem;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(${props => (props.$isOpen ? '0' : '100%')});
   z-index: 90;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.3);
 `;
 
 const MainContent = styled.main`
@@ -176,39 +182,44 @@ const MainContent = styled.main`
   text-align: center;
   padding: 0 24px;
   color: white;
-  animation: ${slideUp} 0.8s ease-out forwards;
+  animation: ${slideUpEntrance} 0.8s ease-out forwards;
 `;
 
 const HeroTitle = styled.h1`
-  font-size: clamp(2.2rem, 8vw, 4.2rem);
+  font-size: clamp(2.2rem, 8vw, 4.5rem);
   font-weight: 900;
-  margin-bottom: 0.8rem;
-  letter-spacing: -1.5px;
-  line-height: 1.1;
-  min-height: 1.2em; /* Reserves space to prevent jumping */
+  margin-bottom: 1rem;
+  letter-spacing: -2px;
+  line-height: 1;
+  min-height: 1.1em; /* Fixed height to prevent jumping while typing */
 `;
 
 const Cursor = styled.span`
-  color: #3b82f6;
-  font-weight: 200;
+  display: inline-block;
+  width: 3px;
+  height: 0.8em;
+  background-color: #3b82f6;
+  margin-left: 6px;
+  vertical-align: middle;
   animation: ${blinkCursor} 0.8s infinite;
-  margin-left: 4px;
+  opacity: ${props => (props.$hide ? 0 : 1)};
+  transition: opacity 0.3s ease;
 `;
 
 const HeroSubtitle = styled.p`
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 750px;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 700px;
   line-height: 1.6;
   margin-bottom: 2.5rem;
   
-  /* Initial hidden state */
+  /* Two-Step Sequence Logic */
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(20px);
   
-  /* Step 2 Trigger */
   ${props => props.$isVisible && css`
-    animation: ${fadeIn} 1.2s ease-out forwards;
+    animation: ${fadeIn} 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.2s;
   `}
 `;
 
@@ -216,34 +227,36 @@ const ActionButton = styled.button`
   background: #3b82f6;
   color: white;
   border: none;
-  padding: 16px 40px;
-  font-size: 1.05rem;
+  padding: 16px 42px;
+  font-size: 1rem;
   font-weight: 700;
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 
   &:hover {
     background: #2563eb;
-    transform: scale(1.05);
-    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
   }
 
-  /* Sync with subtitle fade */
+  /* Two-Step Sequence Logic */
   opacity: 0;
   ${props => props.$isVisible && css`
-    animation: ${fadeIn} 1.2s ease-out 0.4s forwards;
+    animation: ${fadeIn} 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.5s;
   `}
 `;
 
-// === Main Component ===
+// === Home Component ===
 
 const Home = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   
-  // Niche refinement: High-quality professional garage imagery
   const backgrounds = [
     'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80&w=1920',
     'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1920',
@@ -253,7 +266,7 @@ const Home = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Typing state
+  // --- Typing Logic States ---
   const [displayText, setDisplayText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const fullText = "Welcome To Narayan Auto Garage";
@@ -271,31 +284,32 @@ const Home = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
-    }, 7000);
+    }, 8000);
     return () => clearInterval(timer);
   }, [backgrounds.length]);
 
-  // Logic: Lightweight Typing Effect
+  // Logic: Lightweight Typing Engine
   useEffect(() => {
-    let index = 0;
-    const speed = 65; // ms per char
+    let currentIdx = 0;
+    const typingSpeed = 70; // ms per character
     
-    // Delay start until entrance animation is halfway
-    const startTimeout = setTimeout(() => {
+    // Initial delay before typing starts
+    const startDelay = setTimeout(() => {
       const interval = setInterval(() => {
-        setDisplayText(fullText.slice(0, index));
-        index++;
+        setDisplayText(fullText.slice(0, currentIdx + 1));
+        currentIdx++;
         
-        if (index > fullText.length) {
+        if (currentIdx >= fullText.length) {
           clearInterval(interval);
-          setIsTypingComplete(true); // Trigger Step 2: Subtitle Fade
+          // Small delay before fading in Step 2 elements
+          setTimeout(() => setIsTypingComplete(true), 300);
         }
-      }, speed);
+      }, typingSpeed);
 
       return () => clearInterval(interval);
-    }, 500);
+    }, 600);
 
-    return () => clearTimeout(startTimeout);
+    return () => clearTimeout(startDelay);
   }, []);
 
   const handleLogout = useCallback(() => {
@@ -343,7 +357,7 @@ const Home = () => {
       <MainContent>
           <HeroTitle>
             {displayText}
-            {!isTypingComplete && <Cursor>|</Cursor>}
+            <Cursor $hide={isTypingComplete} />
           </HeroTitle>
           
           <HeroSubtitle $isVisible={isTypingComplete}>
@@ -352,7 +366,7 @@ const Home = () => {
           </HeroSubtitle>
           
           <ActionButton $isVisible={isTypingComplete} onClick={() => navigate('/job-card')}>
-            Get Started
+            Create Job Card
           </ActionButton>
       </MainContent>
 
