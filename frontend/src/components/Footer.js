@@ -35,7 +35,7 @@ const FooterWrapper = styled.footer`
 const Footer = () => {
   return (
     <FooterWrapper>
-      © 2025 Narayan Limited. All rights reserved.
+      © 2026 Narayan Limited. All rights reserved.
     </FooterWrapper>
   );
 };
