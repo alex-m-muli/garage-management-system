@@ -9,7 +9,7 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
-// === 1. ANIMATIONS ===
+// === Animations ===
 
 const slideUp = keyframes`
   from { transform: translateY(30px); opacity: 0; }
@@ -22,7 +22,7 @@ const cinematicPan = keyframes`
   100% { transform: scale(1.02) translate(0, 0); }
 `;
 
-// Standard Blink Rate: 1.06s (Microsoft Word Standard)
+// Professional Cursor Blink (Standard 1.06s cycle)
 const standardBlink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -34,7 +34,7 @@ const buttonShine = keyframes`
   100% { left: 100%; }
 `;
 
-// === 2. STYLED COMPONENTS ===
+// === Styled Components ===
 
 const HeroWrapper = styled.div`
   position: fixed;
@@ -56,7 +56,6 @@ const AnimatedBackground = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   opacity: ${props => (props.$active ? 1 : 0)};
-  /* Ultra-smooth 5s crossfade for a "melting" transition */
   transition: opacity 5s ease-in-out; 
   z-index: -2;
   will-change: transform, opacity;
@@ -144,57 +143,46 @@ const MainContent = styled.div`
   padding: 0 1.5rem;
 `;
 
-/* REFINED TITLE LAYOUT: 
-   Separating the lines ensures "Welcome to Narayan" never moves.
-*/
-const HeroTitleContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 1.5rem;
-  animation: ${slideUp} 0.8s ease forwards;
-`;
-
-const TitleLineFixed = styled.h1`
-  font-size: 4rem;
+const HeroTitle = styled.h1`
+  font-size: 4.5rem;
   font-weight: 900;
+  margin: 0 0 1rem;
   color: white;
-  margin: 0;
-  text-shadow: 0 4px 25px rgba(0,0,0,0.8);
-  letter-spacing: -1.5px;
-  @media (max-width: 768px) { font-size: 2.2rem; }
-`;
-
-const TitleLineAnimated = styled.h2`
-  font-size: 4.8rem;
-  font-weight: 900;
-  color: white;
-  margin: 0;
-  text-shadow: 0 4px 25px rgba(0,0,0,0.8);
+  text-shadow: 0 4px 25px rgba(0,0,0,0.8); 
   display: flex;
+  flex-wrap: nowrap; /* Prevents wrapping which causes the 'jump' */
   align-items: center;
+  justify-content: center;
   gap: 15px;
-  @media (max-width: 768px) { font-size: 2.8rem; }
+  animation: ${slideUp} 0.8s ease forwards;
+  
+  @media (max-width: 768px) { font-size: 2.2rem; gap: 8px; flex-wrap: wrap; }
 `;
 
-/* CURSOR & TYPING WRAPPER:
-   Forces the cursor to be ultra-thin (100 weight + scaleX) and blinks 
-   at the Word-standard 1.06s rate.
+/* FIXED WIDTH LOGIC:
+   The min-width ensures that 'Workshop' (the longest word) doesn't push the 
+   'Welcome' text around. Text-align: left ensures the typing grows outward.
 */
-const TypedWordWrapper = styled.span`
-  color: #60a5fa; 
-  min-width: 250px;
+const TypedWordWrapper = styled.div`
+  display: inline-block;
+  min-width: 320px; 
   text-align: left;
-  
+  color: #60a5fa; 
+  position: relative;
+
+  /* Bulletproof Thin Cursor Fix */
   .react-simple-typewriter-cursor {
-    display: inline-block !important;
-    font-weight: 100 !important;
-    color: #3b82f6 !important;
-    transform: scaleX(0.4); /* Makes the '|' character ultra-thin */
-    margin-left: -5px; /* Pulls it closer to the text */
+    color: transparent !important; /* Hide the actual character */
+    display: inline-block;
+    width: 2px !important; /* The physical width of the line */
+    height: 1em;
+    background-color: #3b82f6 !important; /* Use background to create the line */
+    margin-left: 4px;
+    vertical-align: middle;
     animation: ${standardBlink} 1.06s step-end infinite !important;
   }
+
+  @media (max-width: 768px) { min-width: auto; text-align: center; }
 `;
 
 const HeroSubtitle = styled.p`
@@ -249,7 +237,7 @@ const Footer = styled.footer`
   z-index: 20;
 `;
 
-// === 3. MAIN COMPONENT ===
+// === Component ===
 
 const Home = () => {
   const { logout } = useAuth();
@@ -264,11 +252,6 @@ const Home = () => {
     }, 12000); 
     return () => clearInterval(interval);
   }, [backgrounds.length]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const navItems = [
     { to: "/homepage", icon: <FiHome />, label: "Home" },
@@ -296,7 +279,7 @@ const Home = () => {
           {navItems.map((item, idx) => (
             <NavItem key={idx} to={item.to}>{item.icon} {item.label}</NavItem>
           ))}
-          <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
+          <LogoutBtn onClick={() => { logout(); navigate('/login'); }}><FiLogOut /> Logout</LogoutBtn>
         </DesktopNav>
 
         <button 
@@ -308,24 +291,20 @@ const Home = () => {
       </Header>
 
       <MainContent>
-        <HeroTitleContainer>
-          <TitleLineFixed>Welcome to Narayan</TitleLineFixed>
-          <TitleLineAnimated>
-            <span>Auto</span>
-            <TypedWordWrapper>
-              <Typewriter
-                words={['Garage', 'Workshop']}
-                loop={0}
-                cursor
-                cursorStyle='|'
-                cursorColor='#3b82f6'
-                typeSpeed={220}   
-                deleteSpeed={150}  
-                delaySpeed={4000}  
-              />
-            </TypedWordWrapper>
-          </TitleLineAnimated>
-        </HeroTitleContainer>
+        <HeroTitle>
+          <span>Welcome To Narayan Auto</span>
+          <TypedWordWrapper>
+            <Typewriter
+              words={['Garage', 'Workshop']}
+              loop={0}
+              cursor
+              cursorStyle='|'
+              typeSpeed={250}   // Requested speed: very slow and professional
+              deleteSpeed={150}  
+              delaySpeed={4000}  
+            />
+          </TypedWordWrapper>
+        </HeroTitle>
         
         <HeroSubtitle>
           Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
