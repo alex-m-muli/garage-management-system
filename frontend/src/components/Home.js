@@ -235,7 +235,7 @@ const Caret = styled.span`
   transform: translateY(-50%);
 
   width: 3px; /* slightly thicker cursor */
-  height: 1em;
+  height: 0.6em;
   background: #3b82f6;
   border-radius: 1px;
 
@@ -353,25 +353,25 @@ const Home = () => {
       if (text.length < WORD.length) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length + 1));
-        }, 170); // smooth & slow typing
+        }, 220); // smooth & slow typing
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
           setDeleting(true);
           pauseRef.current = false;
-        }, 3000); // hold before deleting
+        }, 10000); // hold before deleting
       }
     } else {
       if (text.length > 0) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length - 1));
-        }, 140); // smooth delete
+        }, 150); // smooth delete
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
           setDeleting(false);
           pauseRef.current = false;
-        }, 700);
+        }, 2000);
       }
     }
 
