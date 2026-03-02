@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import { Typewriter } from 'react-simple-typewriter'; // <-- Added lightweight typing library
+import { Typewriter } from 'react-simple-typewriter';
 import {
   FiHome, FiUsers, FiSettings, FiFileText,
   FiList, FiGrid, FiLogOut, FiMenu, FiX
@@ -10,22 +10,31 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 // === Animations ===
+
 const slideUp = keyframes`
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
 
-
-// Added a subtle cinematic pan & zoom effect for the background images
 const cinematicPan = keyframes`
   0% { transform: scale(1.02) translate(0, 0); }
   50% { transform: scale(1.08) translate(-1%, -1%); }
   100% { transform: scale(1.02) translate(0, 0); }
 `;
 
+const slowBlink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`;
+
+const buttonShine = keyframes`
+  0% { left: -100%; }
+  20% { left: 100%; }
+  100% { left: 100%; }
+`;
+
 // === Styled Components ===
 
-/* Main wrapper locked with fixed positioning to prevent scrolling */
 const HeroWrapper = styled.div`
   position: fixed;
   inset: 0;
@@ -35,10 +44,9 @@ const HeroWrapper = styled.div`
   display: flex;
   flex-direction: column;
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f172a; /* Deep fallback color */
+  background: #0f172a;
 `;
 
-/* Refined Animated Background with will-change for performance */
 const AnimatedBackground = styled.div`
   position: absolute;
   inset: 0;
@@ -47,17 +55,16 @@ const AnimatedBackground = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   opacity: ${props => (props.$active ? 1 : 0)};
-  transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1); /* Smoother crossfade */
+  /* Smoother, slower 3s crossfade to match the slower background cycle */
+  transition: opacity 3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: -2;
   will-change: transform, opacity;
-  /* Cinematic slow-pan animation */
   animation: ${cinematicPan} 30s ease-in-out infinite alternate;
 `;
 
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
-  /* Darker gradient at bottom to make footer/button legible */
   background: linear-gradient(
     to bottom,
     rgba(15, 23, 42, 0.4) 0%,
@@ -67,13 +74,12 @@ const Overlay = styled.div`
   z-index: -1;
 `;
 
-/* === Header / Navigation === */
 const Header = styled.nav`
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  height: 80px; /* Slightly taller for breathing room */
+  height: 80px;
   width: 100%;
   box-sizing: border-box;
   z-index: 50;
@@ -84,13 +90,11 @@ const LogoSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  
   img {
     height: 42px;
     width: auto;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
   }
-  
   h2 {
     color: white;
     font-size: 1.35rem;
@@ -105,10 +109,7 @@ const DesktopNav = styled.div`
   display: flex;
   gap: 8px;
   align-items: center;
-
-  @media (max-width: 1100px) {
-    display: none;
-  }
+  @media (max-width: 1100px) { display: none; }
 `;
 
 const NavItem = styled(NavLink)`
@@ -122,14 +123,10 @@ const NavItem = styled(NavLink)`
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-  background: transparent;
-
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     color: white;
-    transform: translateY(-2px);
   }
-
   &.active {
     background: rgba(37, 99, 235, 0.9);
     color: white;
@@ -151,54 +148,12 @@ const LogoutBtn = styled.button`
   gap: 8px;
   margin-left: 12px;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-
   &:hover {
     background: #ef4444;
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
+    transform: scale(1.05);
   }
 `;
 
-const MobileToggle = styled.button`
-  background: none;
-  border: none;
-  color: white;
-  font-size: 2rem;
-  cursor: pointer;
-  display: none;
-  z-index: 101;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  transition: transform 0.2s ease;
-  
-  &:active {
-    transform: scale(0.9);
-  }
-
-  @media (max-width: 1100px) {
-    display: block;
-  }
-`;
-
-const MobileDrawer = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 280px;
-  background: rgba(15, 23, 42, 0.98);
-  backdrop-filter: blur(10px);
-  padding: 6rem 1.5rem 2rem;
-  z-index: 100;
-  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  box-shadow: -10px 0 30px rgba(0,0,0,0.7);
-`;
-
-/* === Main Content === */
 const MainContent = styled.div`
   flex: 1;
   display: flex;
@@ -219,32 +174,22 @@ const HeroTitle = styled.h1`
   text-shadow: 0 4px 25px rgba(0,0,0,0.8); 
   letter-spacing: -1.5px;
   animation: ${slideUp} 0.8s ease forwards;
-  
-  /* Prevents the typed word from dropping to a new line awkwardly */
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 15px;
 
-  @media (max-width: 768px) {
-    font-size: 2.8rem;
-    gap: 8px;
-  }
-`;
-const slowBlink = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  @media (max-width: 768px) { font-size: 2.8rem; gap: 8px; }
 `;
 
-/* Dedicated wrapper for the typewriter to ensure stability */
-// Update your TypedWordWrapper to target the cursor class
 const TypedWordWrapper = styled.span`
   white-space: nowrap;
+  color: #60a5fa; /* Subtle blue tint for the changing word */
   
-  /* Targeting the library's cursor class to force a 1s blink */
+  /* Target the cursor with !important to ensure 1s blink rate */
   .react-simple-typewriter-cursor {
-    animation: ${slowBlink} 1s step-end infinite;
-    font-weight: 200; /* Makes the cursor look sleeker */
+    animation: ${slowBlink} 1s step-end infinite !important;
+    font-weight: 200;
   }
 `;
 
@@ -260,6 +205,8 @@ const HeroSubtitle = styled.p`
 `;
 
 const ActionButton = styled.button`
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -268,20 +215,25 @@ const ActionButton = styled.button`
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   animation: ${slideUp} 1.2s ease forwards;
   letter-spacing: 1px;
   text-transform: uppercase;
 
   &:hover {
-    transform: translateY(-5px) scale(1.02);
+    transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(37, 99, 235, 0.6);
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   }
-  
-  &:active {
-    transform: translateY(-2px);
+
+  /* Non-intrusive polish: Button Shine Effect */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: ${buttonShine} 8s infinite;
   }
 `;
 
@@ -299,7 +251,6 @@ const Footer = styled.footer`
   text-shadow: 0 1px 2px rgba(0,0,0,0.9);
 `;
 
-// === Component ===
 const Home = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -307,11 +258,11 @@ const Home = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Background Slider Logic
+  // REFINEMENT: Increased to 12000ms (12 seconds) for a slower, calmer background rotation
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
-    }, 8000); // Slightly longer interval to appreciate the cinematic pan
+    }, 12000); 
     return () => clearInterval(interval);
   }, [backgrounds.length]);
 
@@ -331,85 +282,57 @@ const Home = () => {
 
   return (
     <HeroWrapper>
-      {/* Background Layer with Cinematic Panning */}
       {backgrounds.map((bg, i) => (
         <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
       ))}
       <Overlay />
 
-      {/* Header */}
       <Header>
         <LogoSection>
-          <img src="/logo.png" alt="Narayan Auto Garage Logo" />
+          <img src="/logo.png" alt="Logo" />
           <h2>Narayan Garage</h2>
         </LogoSection>
 
         <DesktopNav>
           {navItems.map((item, idx) => (
-            <NavItem key={idx} to={item.to}>
-              {item.icon} {item.label}
-            </NavItem>
+            <NavItem key={idx} to={item.to}>{item.icon} {item.label}</NavItem>
           ))}
-          <LogoutBtn onClick={handleLogout}>
-            <FiLogOut /> Logout
-          </LogoutBtn>
+          <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
         </DesktopNav>
 
-        <MobileToggle onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle Menu">
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+          style={{background:'none', border:'none', color:'white', fontSize:'2rem', cursor:'pointer', display: window.innerWidth < 1100 ? 'block' : 'none'}}
+        >
           {mobileMenuOpen ? <FiX /> : <FiMenu />}
-        </MobileToggle>
+        </button>
       </Header>
 
-      {/* Mobile Drawer */}
-      <MobileDrawer $isOpen={mobileMenuOpen}>
-        {navItems.map((item, idx) => (
-          <NavItem 
-            key={idx} 
-            to={item.to} 
-            onClick={() => setMobileMenuOpen(false)} 
-            style={{width: '100%', justifyContent:'flex-start'}}
-          >
-            {item.icon} {item.label}
-          </NavItem>
-        ))}
-        <div style={{height: '1px', background: 'rgba(255,255,255,0.1)', margin: '15px 0'}}></div>
-        <LogoutBtn onClick={handleLogout} style={{width: '100%', margin: 0, justifyContent: 'center'}}>
-           <FiLogOut /> Logout
-        </LogoutBtn>
-      </MobileDrawer>
-
-      {/* Main Content Area */}
       <MainContent>
-          <HeroTitle>
-            <span>Welcome To Narayan Auto</span>
-            <TypedWordWrapper>
+        <HeroTitle>
+          <span>Welcome To Narayan Auto</span>
+          <TypedWordWrapper>
             <Typewriter
               words={['Garage', 'Workshop']}
-              loop={0}                // Infinite loop
+              loop={0}
               cursor
               cursorStyle='|'
-              cursorColor='#3b82f6'   // Your theme blue
-              
-              /* SPEED REFINEMENTS:
-                - typeSpeed: Higher number = Slower typing (150ms is very smooth)
-                - deleteSpeed: Higher number = Slower deleting (100ms feels natural)
-                - delaySpeed: How long the word stays before deleting (3000ms = 3 seconds)
-              */
-              typeSpeed={150}         
-              deleteSpeed={100}       
-              delaySpeed={3000}       
+              cursorColor='#3b82f6'
+              typeSpeed={180}   // REFINEMENT: Slower, smoother typing
+              deleteSpeed={120}  // REFINEMENT: Slower, rhythmic deleting
+              delaySpeed={4000}  // REFINEMENT: Stays visible for 4 seconds before deleting
             />
-            </TypedWordWrapper>
-          </HeroTitle>
-          
-          <HeroSubtitle>
-            Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
-            Professional Service. Guaranteed Quality.
-          </HeroSubtitle>
-          
-          <ActionButton onClick={() => navigate('/services')}>
-            Access Dashboard
-          </ActionButton>
+          </TypedWordWrapper>
+        </HeroTitle>
+        
+        <HeroSubtitle>
+          Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
+          Professional Service. Guaranteed Quality.
+        </HeroSubtitle>
+        
+        <ActionButton onClick={() => navigate('/services')}>
+          Access Dashboard
+        </ActionButton>
       </MainContent>
 
       <Footer>
