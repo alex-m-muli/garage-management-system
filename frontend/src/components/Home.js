@@ -207,8 +207,10 @@ const TypedWord = styled.span`
   position: relative;
   display: inline-block;
 
-  width: 6ch;              /* Garage = 6 characters */
-  margin-left: 0.33em;    /* tweak this to match natural word spacing */
+  width: 6ch;
+  margin-left: 0.33em;
+
+  line-height: 1;   /* ✅ keeps it on the same visual line */
 
   font-weight: 900;
   color: #60a5fa;
@@ -220,7 +222,9 @@ const TypedWord = styled.span`
 const TypedText = styled.span`
   position: absolute;
   left: 0;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  line-height: 1;
 `;
 
 /* Cursor is taken out of layout completely (no shifting) */
