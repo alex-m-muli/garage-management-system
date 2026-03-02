@@ -11,22 +11,26 @@ import { useAuth } from '../context/AuthContext';
 
 // === Animations ===
 
+// Smooth entry animation for text elements
 const slideUp = keyframes`
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
 
+// Slow cinematic movement for background depth
 const cinematicPan = keyframes`
   0% { transform: scale(1.02) translate(0, 0); }
   50% { transform: scale(1.08) translate(-1%, -1%); }
   100% { transform: scale(1.02) translate(0, 0); }
 `;
 
-const slowBlink = keyframes`
+// Standard cursor blink (1.06s is the standard "Word/Chat" blink rate)
+const standardBlink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 `;
 
+// Subtle shine sweep for the Action Button
 const buttonShine = keyframes`
   0% { left: -100%; }
   20% { left: 100%; }
@@ -36,7 +40,7 @@ const buttonShine = keyframes`
 // === Styled Components ===
 
 const HeroWrapper = styled.div`
-  position: fixed;
+  position: fixed; /* Ensures no scrolling on the homepage */
   inset: 0;
   width: 100%;
   height: 100%;
@@ -55,8 +59,8 @@ const AnimatedBackground = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   opacity: ${props => (props.$active ? 1 : 0)};
-  /* Smoother, slower 3s crossfade to match the slower background cycle */
-  transition: opacity 3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Ultra-smooth 5s crossfade for a professional "melting" effect */
+  transition: opacity 5s ease-in-out; 
   z-index: -2;
   will-change: transform, opacity;
   animation: ${cinematicPan} 30s ease-in-out infinite alternate;
@@ -65,6 +69,7 @@ const AnimatedBackground = styled.div`
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
+  /* Darkened gradient overlay to ensure text legibility over images */
   background: linear-gradient(
     to bottom,
     rgba(15, 23, 42, 0.4) 0%,
@@ -184,12 +189,12 @@ const HeroTitle = styled.h1`
 
 const TypedWordWrapper = styled.span`
   white-space: nowrap;
-  color: #60a5fa; /* Subtle blue tint for the changing word */
+  color: #60a5fa; /* Modern blue tint for the dynamic word */
   
-  /* Target the cursor with !important to ensure 1s blink rate */
+  /* Targeted cursor refinement */
   .react-simple-typewriter-cursor {
-    animation: ${slowBlink} 1s step-end infinite !important;
-    font-weight: 200;
+    animation: ${standardBlink} 1.06s step-end infinite !important;
+    font-weight: 100 !important; /* Forces the cursor to be thinner */
   }
 `;
 
@@ -207,7 +212,8 @@ const HeroSubtitle = styled.p`
 const ActionButton = styled.button`
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  /* Refined cool gradient: Royal Blue to Sky Blue to Deep Blue */
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1.2rem 3.5rem;
@@ -224,16 +230,17 @@ const ActionButton = styled.button`
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(37, 99, 235, 0.6);
+    filter: brightness(1.1);
   }
 
-  /* Non-intrusive polish: Button Shine Effect */
+  /* Refined shine sweep */
   &::after {
     content: '';
     position: absolute;
     top: 0; left: -100%;
     width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    animation: ${buttonShine} 8s infinite;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: ${buttonShine} 10s infinite;
   }
 `;
 
@@ -258,11 +265,11 @@ const Home = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // REFINEMENT: Increased to 12000ms (12 seconds) for a slower, calmer background rotation
+  // Background Loop Logic
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
-    }, 12000); 
+    }, 12000); // 12s cycle to allow for the smooth 5s crossfade
     return () => clearInterval(interval);
   }, [backgrounds.length]);
 
@@ -282,11 +289,13 @@ const Home = () => {
 
   return (
     <HeroWrapper>
+      {/* Dynamic Background Layers */}
       {backgrounds.map((bg, i) => (
         <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
       ))}
       <Overlay />
 
+      {/* Navigation Bar */}
       <Header>
         <LogoSection>
           <img src="/logo.png" alt="Logo" />
@@ -300,6 +309,7 @@ const Home = () => {
           <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
         </DesktopNav>
 
+        {/* Mobile Menu Toggle */}
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
           style={{background:'none', border:'none', color:'white', fontSize:'2rem', cursor:'pointer', display: window.innerWidth < 1100 ? 'block' : 'none'}}
@@ -308,6 +318,7 @@ const Home = () => {
         </button>
       </Header>
 
+      {/* Hero Content Section */}
       <MainContent>
         <HeroTitle>
           <span>Welcome To Narayan Auto</span>
@@ -318,9 +329,9 @@ const Home = () => {
               cursor
               cursorStyle='|'
               cursorColor='#3b82f6'
-              typeSpeed={180}   // REFINEMENT: Slower, smoother typing
-              deleteSpeed={120}  // REFINEMENT: Slower, rhythmic deleting
-              delaySpeed={4000}  // REFINEMENT: Stays visible for 4 seconds before deleting
+              typeSpeed={180}   // Smooth, deliberate typing
+              deleteSpeed={120}  // Slower, rhythmic deleting
+              delaySpeed={4000}  // Word remains visible for 4s before loop restarts
             />
           </TypedWordWrapper>
         </HeroTitle>
