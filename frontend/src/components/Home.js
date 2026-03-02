@@ -8,32 +8,20 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
-/*
-  Home.js - Final regenerated
-  - Keeps position: fixed (full-screen hero, no scrolling)
-  - Background images preserved and rotated (z-index fixed so they show)
-  - Typing effect: custom, slow & smooth, loops the single word "Garage"
-  - Cursor: thin blue caret (1px) blinking at ~530ms (Windows-like)
-  - No 'Workshop' anywhere; only 'Garage' typed/deleted
-  - Font of typed word matches the rest of the title (no monospace)
-  - Plenty of inline comments for easy tweaks
-*/
+/* ---------------- Animations ---------------- */
 
-/* ===== Animations / helpers ===== */
 const slideUp = keyframes`
   from { transform: translateY(24px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 `;
 
-/* gentle cinematic background movement */
 const bgZoom = keyframes`
   from { transform: scale(1.02); }
   to   { transform: scale(1.06); }
 `;
 
-/* ===== Styled components ===== */
+/* ---------------- Layout ---------------- */
 
-/* Keep fixed per your request */
 const HeroWrapper = styled.div`
   position: fixed;
   inset: 0;
@@ -43,10 +31,9 @@ const HeroWrapper = styled.div`
   display: flex;
   flex-direction: column;
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  background: #0f172a; /* fallback */
+  background: #0f172a;
 `;
 
-/* Backgrounds (preserved paths). z-index ensures they stay behind overlay/content */
 const AnimatedBackground = styled.div`
   position: absolute;
   inset: 0;
@@ -57,11 +44,10 @@ const AnimatedBackground = styled.div`
   opacity: ${p => (p.$active ? 1 : 0)};
   transition: opacity 1.6s ease-in-out;
   z-index: -2;
-  will-change: transform, opacity;
   animation: ${bgZoom} 22s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 `;
 
-/* dark overlay to improve contrast */
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
@@ -74,7 +60,8 @@ const Overlay = styled.div`
   );
 `;
 
-/* Header / Nav (unchanged behavior) */
+/* ---------------- Header ---------------- */
+
 const Header = styled.nav`
   display: flex;
   align-items: center;
@@ -92,7 +79,10 @@ const LogoSection = styled.div`
   align-items: center;
   gap: 12px;
 
-  img { height: 38px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+  img {
+    height: 38px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
 
   h2 {
     color: white;
@@ -107,7 +97,10 @@ const DesktopNav = styled.div`
   display: flex;
   gap: 10px;
   align-items: center;
-  @media (max-width: 1100px) { display: none; }
+
+  @media (max-width: 1100px) {
+    display: none;
+  }
 `;
 
 const NavItem = styled(NavLink)`
@@ -124,7 +117,10 @@ const NavItem = styled(NavLink)`
   background: rgba(0,0,0,0.18);
   backdrop-filter: blur(4px);
 
-  &:hover { background: rgba(255,255,255,0.06); transform: translateY(-2px); }
+  &:hover {
+    background: rgba(255,255,255,0.06);
+    transform: translateY(-2px);
+  }
 
   &.active {
     background: #2563eb;
@@ -148,7 +144,10 @@ const LogoutBtn = styled.button`
   transition: transform 0.18s;
   box-shadow: 0 4px 12px rgba(220,38,38,0.35);
 
-  &:hover { background: #ef4444; transform: scale(1.03); }
+  &:hover {
+    background: #ef4444;
+    transform: scale(1.03);
+  }
 `;
 
 const MobileToggle = styled.button`
@@ -159,17 +158,22 @@ const MobileToggle = styled.button`
   cursor: pointer;
   display: none;
   z-index: 101;
-  @media (max-width: 1100px) { display: block; }
+
+  @media (max-width: 1100px) {
+    display: block;
+  }
 `;
 
 const MobileDrawer = styled.div`
   position: fixed;
-  top: 0; right: 0; bottom: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
   width: 280px;
   background: rgba(15,23,42,0.98);
   padding: 5rem 1.5rem 2rem;
   z-index: 100;
-  transform: translateX(${p => p.$isOpen ? '0' : '100%'});
+  transform: translateX(${p => (p.$isOpen ? '0' : '100%')});
   transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
   display: flex;
   flex-direction: column;
@@ -177,7 +181,8 @@ const MobileDrawer = styled.div`
   box-shadow: -12px 0 30px rgba(0,0,0,0.5);
 `;
 
-/* Main content */
+/* ---------------- Main content ---------------- */
+
 const MainContent = styled.div`
   flex: 1;
   display: flex;
@@ -189,7 +194,6 @@ const MainContent = styled.div`
   padding: 0 1rem;
 `;
 
-/* Hero title - typed word uses same font/weight as rest of title */
 const HeroTitle = styled.h1`
   font-size: 4rem;
   font-weight: 900;
@@ -198,44 +202,42 @@ const HeroTitle = styled.h1`
   text-shadow: 0 4px 25px rgba(0,0,0,0.6);
   letter-spacing: -1px;
   animation: ${slideUp} 0.8s ease forwards;
-  display: flex;
+
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 
   @media (max-width: 768px) {
     font-size: 2.5rem;
   }
 `;
 
-/* Container for the typed word - width sized to 'Garage' to avoid jump (small buffer) */
+/* fixed width so no layout shifting happens */
 const TypedWord = styled.span`
   display: inline-block;
-  min-width: 8ch; /* 'Garage' is 6 chars; 8ch provides stable spacing */
+  min-width: 8ch;
+  margin-left: 8px;  /* <-- controls spacing instead of JSX space or flex gap */
   font-weight: 900;
-  color: #f8fafc; /* matches title color */
-  position: relative;
+  color: #f8fafc;
   white-space: nowrap;
-  /* ensure typed word uses same font as title */
 `;
 
-/* Thin blue caret styled like a regular text caret:
-   - width 1px (very thin)
-   - blink interval ~530ms to match typical system caret
-*/
 const Caret = styled.span`
   display: inline-block;
-  width: 1px;
+  width: 2px;              /* slightly thicker */
   height: 1em;
-  margin-left: 6px;
-  background: #3b82f6; /* blue caret */
+  margin-left: 4px;
+  background: #3b82f6;
   vertical-align: middle;
   border-radius: 1px;
-  animation: blink 530ms steps(1) infinite;
-  @keyframes blink { 50% { opacity: 0 } }
+
+  /* 3x slower blink than before */
+  animation: blink 1590ms steps(1) infinite;
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
 `;
 
-/* subtitle / button unchanged visually */
 const HeroSubtitle = styled.p`
   font-size: 1.35rem;
   color: rgba(255,255,255,0.95);
@@ -256,11 +258,16 @@ const ActionButton = styled.button`
   font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.12);
   transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   animation: ${slideUp} 1.2s ease forwards;
 
-  &:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(37,99,235,0.4); }
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(37,99,235,0.4);
+  }
 `;
 
 const Footer = styled.footer`
@@ -276,62 +283,62 @@ const Footer = styled.footer`
   z-index: 20;
 `;
 
-/* ===== Typing configuration (tweakable) ===== */
+/* ---------------- Typing config ---------------- */
 
-/*
-  - We only type the single word: "Garage"
-  - Slower and smoother typing achieved by slightly longer intervals,
-    and by using single-character steps (simple & reliable).
-  - Hold for a few seconds with the caret visible before deleting.
-*/
 const FULL_WORD = 'Garage';
-const TYPE_SPEED = 300;      // ms per char when typing (slow & smooth)
-const DELETE_SPEED = 300;     // ms per char when deleting
-const HOLD_AFTER_TYPE = 5000; // ms pause after full word typed (caret visible)
-const HOLD_AFTER_DELETE = 450; // ms before starting typing again
 
-/* ===== Component ===== */
+const TYPE_SPEED = 160;
+const DELETE_SPEED = 90;
+const HOLD_AFTER_TYPE = 2400;
+const HOLD_AFTER_DELETE = 450;
+
+/* ---------------- Component ---------------- */
+
 const Home = () => {
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const backgrounds = ['/background.jpg', '/background2.jpg', '/background3.jpg'];
+  const backgrounds = [
+    '/background.jpg',
+    '/background2.jpg',
+    '/background3.jpg'
+  ];
+
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // typing state
   const [text, setText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // rotate backgrounds (kept but with long interval)
+  /* background rotation (unchanged behaviour) */
   useEffect(() => {
     const id = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
     }, 11000);
+
     return () => clearInterval(id);
   }, [backgrounds.length]);
 
-  // core typing loop: type -> hold -> delete -> hold -> repeat
+  /* simple smooth typing loop */
   useEffect(() => {
     let timer;
 
-    // when fully typed, wait then start deleting
     if (!isDeleting && text === FULL_WORD) {
       timer = setTimeout(() => setIsDeleting(true), HOLD_AFTER_TYPE);
       return () => clearTimeout(timer);
     }
 
-    // when fully deleted, wait then start typing again
     if (isDeleting && text === '') {
       timer = setTimeout(() => setIsDeleting(false), HOLD_AFTER_DELETE);
       return () => clearTimeout(timer);
     }
 
-    // normal typing/deleting step
     timer = setTimeout(() => {
       const next = isDeleting
-        ? FULL_WORD.substring(0, Math.max(0, text.length - 1))
-        : FULL_WORD.substring(0, text.length + 1);
+        ? FULL_WORD.slice(0, text.length - 1)
+        : FULL_WORD.slice(0, text.length + 1);
+
       setText(next);
     }, isDeleting ? DELETE_SPEED : TYPE_SPEED);
 
@@ -355,13 +362,16 @@ const Home = () => {
   return (
     <HeroWrapper>
 
-      {/* BACKGROUNDS (preserved files & fixed stacking) */}
       {backgrounds.map((bg, i) => (
-        <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
+        <AnimatedBackground
+          key={i}
+          image={bg}
+          $active={i === bgIndex}
+        />
       ))}
+
       <Overlay />
 
-      {/* HEADER */}
       <Header>
         <LogoSection>
           <img src="/logo.png" alt="Logo" />
@@ -370,9 +380,13 @@ const Home = () => {
 
         <DesktopNav>
           {navItems.map((item, idx) => (
-            <NavItem key={idx} to={item.to}>{item.icon} {item.label}</NavItem>
+            <NavItem key={idx} to={item.to}>
+              {item.icon} {item.label}
+            </NavItem>
           ))}
-          <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
+          <LogoutBtn onClick={handleLogout}>
+            <FiLogOut /> Logout
+          </LogoutBtn>
         </DesktopNav>
 
         <MobileToggle onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -380,8 +394,7 @@ const Home = () => {
         </MobileToggle>
       </Header>
 
-      {/* MOBILE DRAWER */}
-      <MobileDrawer $isOpen={mobileMenuOpen} aria-hidden={!mobileMenuOpen}>
+      <MobileDrawer $isOpen={mobileMenuOpen}>
         {navItems.map((item, idx) => (
           <NavItem
             key={idx}
@@ -395,23 +408,21 @@ const Home = () => {
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '10px 0' }} />
 
-        <LogoutBtn onClick={handleLogout} style={{ width: '100%', margin: 0, justifyContent: 'center' }}>
+        <LogoutBtn
+          onClick={handleLogout}
+          style={{ width: '100%', margin: 0, justifyContent: 'center' }}
+        >
           <FiLogOut /> Logout
         </LogoutBtn>
       </MobileDrawer>
 
-      {/* MAIN HERO */}
       <MainContent>
+
         <HeroTitle>
           <span>Welcome To Narayan Auto</span>
-          <TypedWord
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            title={`Narayan Auto ${FULL_WORD}`}
-          >
+          <TypedWord>
             {text}
-            <Caret aria-hidden="true" />
+            <Caret />
           </TypedWord>
         </HeroTitle>
 
@@ -423,9 +434,13 @@ const Home = () => {
         <ActionButton onClick={() => navigate('/services')}>
           Access Dashboard
         </ActionButton>
+
       </MainContent>
 
-      <Footer>© {new Date().getFullYear()} Narayan Limited. All rights reserved.</Footer>
+      <Footer>
+        © {new Date().getFullYear()} Narayan Limited. All rights reserved.
+      </Footer>
+
     </HeroWrapper>
   );
 };
