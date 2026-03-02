@@ -15,6 +15,7 @@ const slideUp = keyframes`
   to { transform: translateY(0); opacity: 1; }
 `;
 
+
 // Added a subtle cinematic pan & zoom effect for the background images
 const cinematicPan = keyframes`
   0% { transform: scale(1.02) translate(0, 0); }
@@ -230,10 +231,21 @@ const HeroTitle = styled.h1`
     gap: 8px;
   }
 `;
+const slowBlink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`;
 
 /* Dedicated wrapper for the typewriter to ensure stability */
+// Update your TypedWordWrapper to target the cursor class
 const TypedWordWrapper = styled.span`
   white-space: nowrap;
+  
+  /* Targeting the library's cursor class to force a 1s blink */
+  .react-simple-typewriter-cursor {
+    animation: ${slowBlink} 1s step-end infinite;
+    font-weight: 200; /* Makes the cursor look sleeker */
+  }
 `;
 
 const HeroSubtitle = styled.p`
@@ -371,16 +383,22 @@ const Home = () => {
           <HeroTitle>
             <span>Welcome To Narayan Auto</span>
             <TypedWordWrapper>
-              <Typewriter
-                words={['Garage', 'Workshop']}
-                loop={0} // 0 means infinite loop
-                cursor
-                cursorStyle='|'
-                cursorColor='#3b82f6' // The requested blue cursor
-                typeSpeed={100}       // Smooth, deliberate typing speed
-                deleteSpeed={70}      // Slightly faster deletion
-                delaySpeed={3500}     // Leaves the word on screen for a few seconds before deleting
-              />
+            <Typewriter
+              words={['Garage', 'Workshop']}
+              loop={0}                // Infinite loop
+              cursor
+              cursorStyle='|'
+              cursorColor='#3b82f6'   // Your theme blue
+              
+              /* SPEED REFINEMENTS:
+                - typeSpeed: Higher number = Slower typing (150ms is very smooth)
+                - deleteSpeed: Higher number = Slower deleting (100ms feels natural)
+                - delaySpeed: How long the word stays before deleting (3000ms = 3 seconds)
+              */
+              typeSpeed={150}         
+              deleteSpeed={100}       
+              delaySpeed={3000}       
+            />
             </TypedWordWrapper>
           </HeroTitle>
           
