@@ -295,7 +295,7 @@ const Home = () => {
           <span>Welcome To Narayan Auto</span>
           <TypedWordWrapper>
             <Typewriter
-              words={['Garage', 'Workshop']}
+              words={['Garage']}
               loop={0}
               cursor
               cursorStyle='|'
