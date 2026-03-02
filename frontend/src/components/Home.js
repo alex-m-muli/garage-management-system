@@ -232,14 +232,10 @@ const Caret = styled.span`
   position: absolute;
   left: calc(var(--text-width, 0px) + 3px);
 
-  /* visually aligns the caret to the text baseline */
-  top: auto;
-  bottom: 0.08em;
+  top: 0;
 
-  transform: none;
-
-  width: 3px; /* slightly thicker cursor */
-  height: 0.6em; /* your desired height */
+  width: 3px;
+  height: 0.6em;
 
   background: #3b82f6;
   border-radius: 1px;
@@ -358,7 +354,7 @@ const Home = () => {
       if (text.length < WORD.length) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length + 1));
-        }, 250); // smooth & slow typing
+        }, 530); // smooth & slow typing
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
@@ -370,7 +366,7 @@ const Home = () => {
       if (text.length > 0) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length - 1));
-        }, 200); // smooth delete
+        }, 215); // smooth delete
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
