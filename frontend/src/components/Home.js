@@ -22,7 +22,7 @@ const cinematicPan = keyframes`
   100% { transform: scale(1.02) translate(0, 0); }
 `;
 
-// Standard Blink Rate: 1.06s is the industry standard for UI cursors (Windows/Word/Chat)
+// Standard Blink Rate: 1.06s (Microsoft Word Standard)
 const standardBlink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -56,10 +56,8 @@ const AnimatedBackground = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   opacity: ${props => (props.$active ? 1 : 0)};
-  
-  /* REFINEMENT: 5s transition creates an ultra-smooth cross-fade "melt" */
+  /* Ultra-smooth 5s crossfade for a "melting" transition */
   transition: opacity 5s ease-in-out; 
-  
   z-index: -2;
   will-change: transform, opacity;
   animation: ${cinematicPan} 30s ease-in-out infinite alternate;
@@ -146,36 +144,55 @@ const MainContent = styled.div`
   padding: 0 1.5rem;
 `;
 
-const HeroTitle = styled.h1`
-  font-size: 4.5rem;
-  font-weight: 900;
-  margin: 0 0 1rem;
-  color: white;
-  text-shadow: 0 4px 25px rgba(0,0,0,0.8); 
+/* REFINED TITLE LAYOUT: 
+   Separating the lines ensures "Welcome to Narayan" never moves.
+*/
+const HeroTitleContainer = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 1.5rem;
   animation: ${slideUp} 0.8s ease forwards;
-  @media (max-width: 768px) { font-size: 2.8rem; gap: 8px; }
 `;
 
-/* CURSOR LOGIC:
-  We target the library's internal class '.react-simple-typewriter-cursor'.
-  - !important is used to override the library's inline-styles.
-  - width: 2px creates the thin 'Word' vertical bar.
-  - background-color handles the color via CSS so we can make the prop transparent.
+const TitleLineFixed = styled.h1`
+  font-size: 4rem;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  text-shadow: 0 4px 25px rgba(0,0,0,0.8);
+  letter-spacing: -1.5px;
+  @media (max-width: 768px) { font-size: 2.2rem; }
+`;
+
+const TitleLineAnimated = styled.h2`
+  font-size: 4.8rem;
+  font-weight: 900;
+  color: white;
+  margin: 0;
+  text-shadow: 0 4px 25px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  @media (max-width: 768px) { font-size: 2.8rem; }
+`;
+
+/* CURSOR & TYPING WRAPPER:
+   Forces the cursor to be ultra-thin (100 weight + scaleX) and blinks 
+   at the Word-standard 1.06s rate.
 */
 const TypedWordWrapper = styled.span`
-  white-space: nowrap;
   color: #60a5fa; 
+  min-width: 250px;
+  text-align: left;
   
   .react-simple-typewriter-cursor {
     display: inline-block !important;
-    width: 2px !important; 
-    background-color: #3b82f6 !important; 
-    margin-left: 4px;
     font-weight: 100 !important;
+    color: #3b82f6 !important;
+    transform: scaleX(0.4); /* Makes the '|' character ultra-thin */
+    margin-left: -5px; /* Pulls it closer to the text */
     animation: ${standardBlink} 1.06s step-end infinite !important;
   }
 `;
@@ -193,7 +210,6 @@ const HeroSubtitle = styled.p`
 const ActionButton = styled.button`
   position: relative;
   overflow: hidden;
-  /* REFINEMENT: Three-stop Cool Gradient (Royal Blue -> Sky Blue -> Navy) */
   background: linear-gradient(135deg, #2563eb 0%, #60a5fa 50%, #1e3a8a 100%);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -242,13 +258,17 @@ const Home = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // REFINEMENT: 12s interval gives the 5s crossfade room to breathe
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
     }, 12000); 
     return () => clearInterval(interval);
   }, [backgrounds.length]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const navItems = [
     { to: "/homepage", icon: <FiHome />, label: "Home" },
@@ -276,7 +296,7 @@ const Home = () => {
           {navItems.map((item, idx) => (
             <NavItem key={idx} to={item.to}>{item.icon} {item.label}</NavItem>
           ))}
-          <LogoutBtn onClick={() => { logout(); navigate('/login'); }}><FiLogOut /> Logout</LogoutBtn>
+          <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
         </DesktopNav>
 
         <button 
@@ -288,27 +308,24 @@ const Home = () => {
       </Header>
 
       <MainContent>
-        <HeroTitle>
-          <span>Welcome To Narayan Auto</span>
-          <TypedWordWrapper>
-            <Typewriter
-              words={['Garage', 'Workshop']}
-              loop={0}
-              cursor
-              cursorStyle=' ' // Space here allows our CSS 'width' to define the cursor bar
-              cursorColor='transparent' // We handle the color in CSS
-              
-              /* SPEED SETTINGS:
-                 - typeSpeed: Slower = Higher number (200ms is very calm)
-                 - deleteSpeed: 150ms feels natural for deleting
-                 - delaySpeed: 4000ms stays on screen for 4 seconds
-              */
-              typeSpeed={220}   
-              deleteSpeed={150}  
-              delaySpeed={4000}  
-            />
-          </TypedWordWrapper>
-        </HeroTitle>
+        <HeroTitleContainer>
+          <TitleLineFixed>Welcome to Narayan</TitleLineFixed>
+          <TitleLineAnimated>
+            <span>Auto</span>
+            <TypedWordWrapper>
+              <Typewriter
+                words={['Garage', 'Workshop']}
+                loop={0}
+                cursor
+                cursorStyle='|'
+                cursorColor='#3b82f6'
+                typeSpeed={220}   
+                deleteSpeed={150}  
+                delaySpeed={4000}  
+              />
+            </TypedWordWrapper>
+          </TitleLineAnimated>
+        </HeroTitleContainer>
         
         <HeroSubtitle>
           Your Trusted Partner for Vehicle Maintenance & Repair.<br/>
