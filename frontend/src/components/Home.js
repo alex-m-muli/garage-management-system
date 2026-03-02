@@ -231,11 +231,16 @@ const TypedText = styled.span`
 const Caret = styled.span`
   position: absolute;
   left: calc(var(--text-width, 0px) + 3px);
-  top: 50%;
-  transform: translateY(-50%);
+
+  /* visually aligns the caret to the text baseline */
+  top: auto;
+  bottom: 0.08em;
+
+  transform: none;
 
   width: 3px; /* slightly thicker cursor */
-  height: 0.6em;
+  height: 0.6em; /* your desired height */
+
   background: #3b82f6;
   border-radius: 1px;
 
@@ -353,7 +358,7 @@ const Home = () => {
       if (text.length < WORD.length) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length + 1));
-        }, 220); // smooth & slow typing
+        }, 250); // smooth & slow typing
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
@@ -365,13 +370,13 @@ const Home = () => {
       if (text.length > 0) {
         timer = setTimeout(() => {
           setText(WORD.slice(0, text.length - 1));
-        }, 150); // smooth delete
+        }, 200); // smooth delete
       } else {
         pauseRef.current = true;
         timer = setTimeout(() => {
           setDeleting(false);
           pauseRef.current = false;
-        }, 2000);
+        }, 2100);
       }
     }
 
