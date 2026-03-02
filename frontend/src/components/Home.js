@@ -9,38 +9,35 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
-// === Animations ===
+// === 1. ANIMATIONS ===
 
-// Smooth entry animation for text elements
 const slideUp = keyframes`
   from { transform: translateY(30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 `;
 
-// Slow cinematic movement for background depth
 const cinematicPan = keyframes`
   0% { transform: scale(1.02) translate(0, 0); }
   50% { transform: scale(1.08) translate(-1%, -1%); }
   100% { transform: scale(1.02) translate(0, 0); }
 `;
 
-// Standard cursor blink (1.06s is the standard "Word/Chat" blink rate)
+// Standard Blink Rate: 1.06s is the industry standard for UI cursors (Windows/Word/Chat)
 const standardBlink = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 `;
 
-// Subtle shine sweep for the Action Button
 const buttonShine = keyframes`
   0% { left: -100%; }
   20% { left: 100%; }
   100% { left: 100%; }
 `;
 
-// === Styled Components ===
+// === 2. STYLED COMPONENTS ===
 
 const HeroWrapper = styled.div`
-  position: fixed; /* Ensures no scrolling on the homepage */
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -59,8 +56,10 @@ const AnimatedBackground = styled.div`
   background-position: center;
   background-repeat: no-repeat;
   opacity: ${props => (props.$active ? 1 : 0)};
-  /* Ultra-smooth 5s crossfade for a professional "melting" effect */
+  
+  /* REFINEMENT: 5s transition creates an ultra-smooth cross-fade "melt" */
   transition: opacity 5s ease-in-out; 
+  
   z-index: -2;
   will-change: transform, opacity;
   animation: ${cinematicPan} 30s ease-in-out infinite alternate;
@@ -69,7 +68,6 @@ const AnimatedBackground = styled.div`
 const Overlay = styled.div`
   position: absolute;
   inset: 0;
-  /* Darkened gradient overlay to ensure text legibility over images */
   background: linear-gradient(
     to bottom,
     rgba(15, 23, 42, 0.4) 0%,
@@ -95,19 +93,8 @@ const LogoSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  img {
-    height: 42px;
-    width: auto;
-    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
-  }
-  h2 {
-    color: white;
-    font-size: 1.35rem;
-    margin: 0;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  }
+  img { height: 42px; width: auto; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
+  h2 { color: white; font-size: 1.35rem; margin: 0; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 `;
 
 const DesktopNav = styled.div`
@@ -128,35 +115,23 @@ const NavItem = styled(NavLink)`
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-  }
-  &.active {
-    background: rgba(37, 99, 235, 0.9);
-    color: white;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-    backdrop-filter: blur(4px);
-  }
+  &:hover { background: rgba(255, 255, 255, 0.1); color: white; }
+  &.active { background: rgba(37, 99, 235, 0.9); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
 `;
 
 const LogoutBtn = styled.button`
   background: rgba(220, 38, 38, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.6rem 1.4rem;
   border-radius: 50px;
   cursor: pointer;
   font-weight: 600;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: center; gap: 8px;
   margin-left: 12px;
   transition: all 0.3s ease;
-  &:hover {
-    background: #ef4444;
-    transform: scale(1.05);
-  }
+  &:hover { background: #ef4444; transform: scale(1.05); }
 `;
 
 const MainContent = styled.div`
@@ -177,24 +152,31 @@ const HeroTitle = styled.h1`
   margin: 0 0 1rem;
   color: white;
   text-shadow: 0 4px 25px rgba(0,0,0,0.8); 
-  letter-spacing: -1.5px;
-  animation: ${slideUp} 0.8s ease forwards;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 15px;
-
+  animation: ${slideUp} 0.8s ease forwards;
   @media (max-width: 768px) { font-size: 2.8rem; gap: 8px; }
 `;
 
+/* CURSOR LOGIC:
+  We target the library's internal class '.react-simple-typewriter-cursor'.
+  - !important is used to override the library's inline-styles.
+  - width: 2px creates the thin 'Word' vertical bar.
+  - background-color handles the color via CSS so we can make the prop transparent.
+*/
 const TypedWordWrapper = styled.span`
   white-space: nowrap;
-  color: #60a5fa; /* Modern blue tint for the dynamic word */
+  color: #60a5fa; 
   
-  /* Targeted cursor refinement */
   .react-simple-typewriter-cursor {
+    display: inline-block !important;
+    width: 2px !important; 
+    background-color: #3b82f6 !important; 
+    margin-left: 4px;
+    font-weight: 100 !important;
     animation: ${standardBlink} 1.06s step-end infinite !important;
-    font-weight: 100 !important; /* Forces the cursor to be thinner */
   }
 `;
 
@@ -205,15 +187,14 @@ const HeroSubtitle = styled.p`
   max-width: 650px;
   line-height: 1.6;
   text-shadow: 0 2px 10px rgba(0,0,0,0.9);
-  font-weight: 400;
   animation: ${slideUp} 1s ease forwards;
 `;
 
 const ActionButton = styled.button`
   position: relative;
   overflow: hidden;
-  /* Refined cool gradient: Royal Blue to Sky Blue to Deep Blue */
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+  /* REFINEMENT: Three-stop Cool Gradient (Royal Blue -> Sky Blue -> Navy) */
+  background: linear-gradient(135deg, #2563eb 0%, #60a5fa 50%, #1e3a8a 100%);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1.2rem 3.5rem;
@@ -227,19 +208,14 @@ const ActionButton = styled.button`
   letter-spacing: 1px;
   text-transform: uppercase;
 
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.6);
-    filter: brightness(1.1);
-  }
+  &:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(37, 99, 235, 0.6); }
 
-  /* Refined shine sweep */
   &::after {
     content: '';
     position: absolute;
     top: 0; left: -100%;
     width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
     animation: ${buttonShine} 10s infinite;
   }
 `;
@@ -255,8 +231,9 @@ const Footer = styled.footer`
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.85rem;
   z-index: 20;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
 `;
+
+// === 3. MAIN COMPONENT ===
 
 const Home = () => {
   const { logout } = useAuth();
@@ -265,18 +242,13 @@ const Home = () => {
   const [bgIndex, setBgIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Background Loop Logic
+  // REFINEMENT: 12s interval gives the 5s crossfade room to breathe
   useEffect(() => {
     const interval = setInterval(() => {
       setBgIndex(prev => (prev + 1) % backgrounds.length);
-    }, 12000); // 12s cycle to allow for the smooth 5s crossfade
+    }, 12000); 
     return () => clearInterval(interval);
   }, [backgrounds.length]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const navItems = [
     { to: "/homepage", icon: <FiHome />, label: "Home" },
@@ -289,13 +261,11 @@ const Home = () => {
 
   return (
     <HeroWrapper>
-      {/* Dynamic Background Layers */}
       {backgrounds.map((bg, i) => (
         <AnimatedBackground key={i} image={bg} $active={i === bgIndex} />
       ))}
       <Overlay />
 
-      {/* Navigation Bar */}
       <Header>
         <LogoSection>
           <img src="/logo.png" alt="Logo" />
@@ -306,10 +276,9 @@ const Home = () => {
           {navItems.map((item, idx) => (
             <NavItem key={idx} to={item.to}>{item.icon} {item.label}</NavItem>
           ))}
-          <LogoutBtn onClick={handleLogout}><FiLogOut /> Logout</LogoutBtn>
+          <LogoutBtn onClick={() => { logout(); navigate('/login'); }}><FiLogOut /> Logout</LogoutBtn>
         </DesktopNav>
 
-        {/* Mobile Menu Toggle */}
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
           style={{background:'none', border:'none', color:'white', fontSize:'2rem', cursor:'pointer', display: window.innerWidth < 1100 ? 'block' : 'none'}}
@@ -318,7 +287,6 @@ const Home = () => {
         </button>
       </Header>
 
-      {/* Hero Content Section */}
       <MainContent>
         <HeroTitle>
           <span>Welcome To Narayan Auto</span>
@@ -327,11 +295,17 @@ const Home = () => {
               words={['Garage', 'Workshop']}
               loop={0}
               cursor
-              cursorStyle='|'
-              cursorColor='#3b82f6'
-              typeSpeed={180}   // Smooth, deliberate typing
-              deleteSpeed={120}  // Slower, rhythmic deleting
-              delaySpeed={4000}  // Word remains visible for 4s before loop restarts
+              cursorStyle=' ' // Space here allows our CSS 'width' to define the cursor bar
+              cursorColor='transparent' // We handle the color in CSS
+              
+              /* SPEED SETTINGS:
+                 - typeSpeed: Slower = Higher number (200ms is very calm)
+                 - deleteSpeed: 150ms feels natural for deleting
+                 - delaySpeed: 4000ms stays on screen for 4 seconds
+              */
+              typeSpeed={220}   
+              deleteSpeed={150}  
+              delaySpeed={4000}  
             />
           </TypedWordWrapper>
         </HeroTitle>
@@ -346,9 +320,7 @@ const Home = () => {
         </ActionButton>
       </MainContent>
 
-      <Footer>
-        © {new Date().getFullYear()} Narayan Limited. All rights reserved.
-      </Footer>
+      <Footer>© {new Date().getFullYear()} Narayan Limited. All rights reserved.</Footer>
     </HeroWrapper>
   );
 };
